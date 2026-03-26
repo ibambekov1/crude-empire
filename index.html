@@ -3,1676 +3,1416 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRUDE EMPIRE — Oil & Gas Tycoon</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<title>CRUDE EMPIRE — Williston Basin</title>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@300;400;500;600;700&family=Chakra+Petch:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --crude-gold: #d4a017;
-  --crude-amber: #f4a523;
-  --crude-dark: #0a0a0a;
-  --crude-bg: #0d1117;
-  --oil-black: #1a1a1a;
-  --gas-blue: #2d9cdb;
-  --drill-green: #27ae60;
-  --danger-red: #e74c3c;
-  --steel: #7f8c8d;
-  --silver: #bdc3c7;
-  --text: #ecf0f1;
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#d4a017;--amber:#f4a523;--dark:#0a0a0a;--bg:#0d1117;
+  --green:#27ae60;--red:#e74c3c;--blue:#2d9cdb;--steel:#7f8c8d;
+  --silver:#bdc3c7;--text:#ecf0f1;--oil-brown:#3d2b1f;
 }
-
-html, body { 
-  width: 100%; height: 100%; overflow: hidden;
-  background: var(--crude-dark);
-  font-family: 'Chakra Petch', sans-serif;
-  color: var(--text);
-  cursor: default;
-}
-
-canvas { display: block; }
-
-/* ═══ SCREENS ═══ */
-.screen {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  display: none; z-index: 100;
-}
-.screen.active { display: flex; }
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Chakra Petch',sans-serif;color:var(--text);user-select:none}
 
 /* ═══ MAIN MENU ═══ */
-#mainMenu {
-  flex-direction: column; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at 50% 120%, rgba(212,160,23,0.08) 0%, transparent 60%),
-              linear-gradient(180deg, #050508 0%, #0d1117 40%, #0a0f1a 100%);
-}
+.screen{position:fixed;top:0;left:0;width:100%;height:100%;display:none;z-index:100}
+.screen.active{display:flex}
+#mainMenu{flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 120%,rgba(212,160,23,0.06) 0%,transparent 60%),linear-gradient(180deg,#030305 0%,#0d1117 50%,#0a0f1a 100%)}
+.menu-bg{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden}
+.menu-content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;animation:fadeUp 1.5s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{text-shadow:0 0 40px rgba(212,160,23,0.3)}50%{text-shadow:0 0 80px rgba(212,160,23,0.5),0 0 120px rgba(212,160,23,0.15)}}
+@keyframes pumpRock{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-25deg)}}
 
-.menu-bg-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+.logo{font-family:'Teko',sans-serif;font-weight:700;font-size:6.5rem;color:var(--gold);letter-spacing:14px;text-transform:uppercase;line-height:1;animation:glow 3s ease-in-out infinite}
+.tagline{font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--steel);letter-spacing:8px;text-transform:uppercase;margin:8px 0 40px}
+.menu-btn{display:block;width:340px;padding:16px 32px;margin:8px 0;background:transparent;border:1px solid rgba(212,160,23,0.3);color:var(--gold);font-family:'Teko',sans-serif;font-size:1.5rem;font-weight:500;letter-spacing:6px;text-transform:uppercase;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.menu-btn:hover{border-color:var(--gold);background:rgba(212,160,23,0.06);box-shadow:0 0 40px rgba(212,160,23,0.12);transform:scale(1.02)}
+.menu-btn.primary{border-width:2px;border-color:var(--gold);background:rgba(212,160,23,0.06)}
+.menu-sub{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:rgba(127,140,141,0.4);letter-spacing:3px;position:absolute;bottom:24px}
 
-.menu-content {
-  position: relative; z-index: 10;
-  display: flex; flex-direction: column; align-items: center;
-  animation: fadeInUp 1.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes flicker {
-  0%, 100% { opacity: 1; }
-  92% { opacity: 1; }
-  93% { opacity: 0.7; }
-  94% { opacity: 1; }
-  96% { opacity: 0.8; }
-  97% { opacity: 1; }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { text-shadow: 0 0 40px rgba(212,160,23,0.3), 0 0 80px rgba(212,160,23,0.1); }
-  50% { text-shadow: 0 0 60px rgba(212,160,23,0.5), 0 0 120px rgba(212,160,23,0.2); }
-}
-
-@keyframes drillBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-.game-logo {
-  font-family: 'Teko', sans-serif;
-  font-weight: 700; font-size: 7rem;
-  color: var(--crude-gold);
-  letter-spacing: 18px;
-  text-transform: uppercase;
-  line-height: 1;
-  animation: pulseGlow 3s ease-in-out infinite, flicker 8s infinite;
-  text-shadow: 0 0 40px rgba(212,160,23,0.3), 0 0 80px rgba(212,160,23,0.1);
-  -webkit-text-stroke: 1px rgba(212,160,23,0.3);
-}
-
-.game-logo .oil-icon { 
-  display: inline-block; 
-  animation: drillBounce 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 10px rgba(212,160,23,0.5));
-}
-
-.game-tagline {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.95rem; color: var(--steel);
-  letter-spacing: 8px; text-transform: uppercase;
-  margin-top: 8px; margin-bottom: 50px;
-}
-
-.menu-btn {
-  display: block; width: 320px;
-  padding: 16px 32px; margin: 8px 0;
-  background: transparent;
-  border: 1px solid rgba(212,160,23,0.3);
-  color: var(--crude-gold);
-  font-family: 'Teko', sans-serif;
-  font-size: 1.5rem; font-weight: 500;
-  letter-spacing: 6px; text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative; overflow: hidden;
-}
-
-.menu-btn::before {
-  content: ''; position: absolute;
-  top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(212,160,23,0.1), transparent);
-  transition: left 0.5s ease;
-}
-
-.menu-btn:hover {
-  border-color: var(--crude-gold);
-  background: rgba(212,160,23,0.05);
-  box-shadow: 0 0 30px rgba(212,160,23,0.15), inset 0 0 30px rgba(212,160,23,0.05);
-  transform: scale(1.02);
-}
-
-.menu-btn:hover::before { left: 100%; }
-
-.menu-btn.primary {
-  border-width: 2px;
-  border-color: var(--crude-gold);
-  background: rgba(212,160,23,0.08);
-}
-
-.menu-version {
-  position: absolute; bottom: 30px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.7rem; color: rgba(127,140,141,0.5);
-  letter-spacing: 4px;
-}
+/* ═══ HOW TO PLAY ═══ */
+#howScreen{flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
+.how-box{max-width:640px;padding:40px}
+.how-title{font-family:'Teko',sans-serif;font-size:2.5rem;color:var(--gold);letter-spacing:6px;margin-bottom:16px}
+.how-text{color:var(--silver);line-height:2.2;font-size:.88rem}
+.how-text strong{color:var(--text)}
+.how-text .hl{color:var(--gold)}
 
 /* ═══ GAME HUD ═══ */
-#gameScreen { flex-direction: column; }
-
-#three-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-
-.hud {
-  position: relative; z-index: 10;
-  pointer-events: none;
-}
-
-.hud > * { pointer-events: auto; }
-
-/* Top Bar */
-.hud-top {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  padding: 16px 24px;
-  background: linear-gradient(180deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.7) 70%, transparent 100%);
-}
-
-.hud-logo {
-  font-family: 'Teko', sans-serif;
-  font-size: 1.8rem; font-weight: 600;
-  color: var(--crude-gold);
-  letter-spacing: 6px;
-  cursor: pointer;
-}
-
-.hud-metrics {
-  display: flex; gap: 24px; align-items: center;
-}
-
-.hud-metric {
-  text-align: center;
-  min-width: 100px;
-}
-
-.hud-metric-label {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.6rem; color: var(--steel);
-  letter-spacing: 2px; text-transform: uppercase;
-}
-
-.hud-metric-value {
-  font-family: 'Teko', sans-serif;
-  font-size: 1.6rem; font-weight: 600;
-  line-height: 1.1;
-}
-
-.hud-metric-value.gold { color: var(--crude-gold); }
-.hud-metric-value.green { color: var(--drill-green); }
-.hud-metric-value.blue { color: var(--gas-blue); }
-.hud-metric-value.red { color: var(--danger-red); }
-
-.hud-date {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.85rem; color: var(--silver);
-  letter-spacing: 3px;
-}
-
-/* Time Controls */
-.time-controls {
-  display: flex; gap: 6px; margin-top: 8px;
-}
-
-.time-btn {
-  padding: 4px 12px;
-  background: rgba(212,160,23,0.1);
-  border: 1px solid rgba(212,160,23,0.3);
-  color: var(--crude-gold);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.time-btn:hover, .time-btn.active {
-  background: rgba(212,160,23,0.25);
-  border-color: var(--crude-gold);
-}
-
-/* Bottom Panel */
-.hud-bottom {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: linear-gradient(0deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.8) 80%, transparent 100%);
-  padding: 20px 24px 16px;
-  z-index: 10;
-}
-
-.bottom-tabs {
-  display: flex; gap: 4px; margin-bottom: 12px;
-}
-
-.tab-btn {
-  padding: 6px 20px;
-  background: transparent;
-  border: 1px solid rgba(127,140,141,0.2);
-  border-bottom: none;
-  color: var(--steel);
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.8rem; font-weight: 500;
-  letter-spacing: 1px; text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab-btn.active, .tab-btn:hover {
-  color: var(--crude-gold);
-  border-color: rgba(212,160,23,0.4);
-  background: rgba(212,160,23,0.05);
-}
-
-.tab-content { display: none; min-height: 140px; }
-.tab-content.active { display: block; }
-
-/* Well Cards in bottom panel */
-.well-list {
-  display: flex; gap: 12px; overflow-x: auto;
-  padding-bottom: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--crude-gold) transparent;
-}
-
-.well-card {
-  min-width: 240px; max-width: 260px;
-  background: linear-gradient(135deg, rgba(26,26,46,0.9) 0%, rgba(15,52,96,0.5) 100%);
-  border: 1px solid rgba(212,160,23,0.15);
-  border-left: 3px solid var(--crude-gold);
-  padding: 12px 14px;
-  flex-shrink: 0;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.well-card:hover {
-  border-color: var(--crude-gold);
-  box-shadow: 0 0 20px rgba(212,160,23,0.1);
-  transform: translateY(-2px);
-}
-
-.well-card.producing { border-left-color: var(--drill-green); }
-.well-card.drilling { border-left-color: var(--gas-blue); }
-.well-card.completing { border-left-color: var(--crude-amber); }
-
-.well-card-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 6px;
-}
-
-.well-card-name {
-  font-family: 'Teko', sans-serif;
-  font-size: 1.1rem; font-weight: 500;
-  color: var(--text); letter-spacing: 1px;
-}
-
-.well-card-status {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.6rem;
-  padding: 2px 8px;
-  border-radius: 2px;
-  letter-spacing: 1px;
-}
-
-.status-producing { background: rgba(39,174,96,0.2); color: var(--drill-green); }
-.status-drilling { background: rgba(45,156,219,0.2); color: var(--gas-blue); }
-.status-completing { background: rgba(244,165,35,0.2); color: var(--crude-amber); }
-.status-permitting { background: rgba(127,140,141,0.2); color: var(--steel); }
-.status-lease { background: rgba(212,160,23,0.15); color: var(--crude-gold); }
-.status-flowback { background: rgba(155,89,182,0.2); color: #9b59b6; }
-
-.well-card-stats {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-  font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
-}
-
-.well-stat-label { color: var(--steel); }
-.well-stat-value { color: var(--text); text-align: right; }
-
-/* Progress bar */
-.progress-bar {
-  width: 100%; height: 4px;
-  background: rgba(127,140,141,0.2);
-  margin-top: 6px; overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--crude-gold), var(--crude-amber));
-  transition: width 0.5s ease;
-}
-
-/* Basin Selector Panel */
-.basin-panel {
-  position: fixed; right: -420px; top: 0; bottom: 0; width: 400px;
-  background: linear-gradient(180deg, rgba(10,15,26,0.98) 0%, rgba(10,10,10,0.98) 100%);
-  border-left: 1px solid rgba(212,160,23,0.2);
-  z-index: 50;
-  transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow-y: auto;
-  padding: 24px;
-}
-
-.basin-panel.open { right: 0; }
-
-.basin-panel-title {
-  font-family: 'Teko', sans-serif;
-  font-size: 1.8rem; font-weight: 600;
-  color: var(--crude-gold);
-  letter-spacing: 4px;
-  margin-bottom: 8px;
-}
-
-.basin-option {
-  background: rgba(26,26,46,0.6);
-  border: 1px solid rgba(212,160,23,0.1);
-  padding: 16px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.basin-option:hover {
-  border-color: var(--crude-gold);
-  background: rgba(212,160,23,0.05);
-  transform: translateX(-4px);
-}
-
-.basin-option.selected {
-  border-color: var(--crude-gold);
-  border-width: 2px;
-  background: rgba(212,160,23,0.08);
-}
-
-.basin-name {
-  font-family: 'Teko', sans-serif;
-  font-size: 1.3rem; font-weight: 500;
-  color: var(--crude-gold);
-  letter-spacing: 2px;
-}
-
-.basin-desc {
-  font-size: 0.75rem; color: var(--steel);
-  margin: 4px 0 8px;
-}
-
-.basin-stats {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-  font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
-}
-
-.basin-stat { color: var(--silver); }
-.basin-stat span { color: var(--text); }
-
-.panel-input {
-  width: 100%; padding: 10px 14px;
-  background: rgba(26,26,46,0.8);
-  border: 1px solid rgba(212,160,23,0.2);
-  color: var(--text);
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.9rem;
-  margin: 12px 0;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.panel-input:focus { border-color: var(--crude-gold); }
-
-.panel-btn {
-  width: 100%; padding: 14px;
-  background: linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(212,160,23,0.1) 100%);
-  border: 2px solid var(--crude-gold);
-  color: var(--crude-gold);
-  font-family: 'Teko', sans-serif;
-  font-size: 1.3rem; font-weight: 500;
-  letter-spacing: 4px; text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.panel-btn:hover {
-  background: rgba(212,160,23,0.3);
-  box-shadow: 0 0 30px rgba(212,160,23,0.2);
-}
-
-.panel-btn:disabled {
-  opacity: 0.4; cursor: not-allowed;
-}
-
-.panel-close {
-  position: absolute; top: 16px; right: 16px;
-  background: none; border: none;
-  color: var(--steel); font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.panel-close:hover { color: var(--text); }
-
-/* Event Toast */
-.event-toast {
-  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-  background: linear-gradient(135deg, rgba(26,0,0,0.95) 0%, rgba(45,0,0,0.95) 100%);
-  border: 1px solid var(--danger-red);
-  padding: 14px 28px;
-  z-index: 200;
-  animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 4s forwards;
-  max-width: 500px; text-align: center;
-  box-shadow: 0 0 40px rgba(231,76,60,0.2);
-}
-
-.event-toast.positive {
-  background: linear-gradient(135deg, rgba(0,26,0,0.95) 0%, rgba(0,45,0,0.95) 100%);
-  border-color: var(--drill-green);
-  box-shadow: 0 0 40px rgba(39,174,96,0.2);
-}
-
-.event-toast-title {
-  font-family: 'Teko', sans-serif;
-  font-size: 1.2rem; font-weight: 600;
-  letter-spacing: 2px;
-}
-
-.event-toast-desc {
-  font-size: 0.8rem; color: var(--silver);
-  margin-top: 4px;
-}
-
-@keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-@keyframes toastOut {
-  from { opacity: 1; }
-  to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-}
-
-/* Gauges */
-.gauge-row {
-  display: flex; gap: 16px; align-items: center;
-  flex-wrap: wrap;
-}
-
-.gauge {
-  display: flex; flex-direction: column; align-items: center;
-  min-width: 80px;
-}
-
-.gauge-ring {
-  width: 64px; height: 64px;
-  border-radius: 50%;
-  position: relative;
-  display: flex; align-items: center; justify-content: center;
-}
-
-.gauge-value {
-  font-family: 'Teko', sans-serif;
-  font-size: 1.1rem; font-weight: 600;
-  position: absolute;
-}
-
-.gauge-label {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.55rem; color: var(--steel);
-  margin-top: 4px; letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-/* Production chart area */
-.prod-chart {
-  width: 100%; height: 100px;
-  position: relative;
-  margin-top: 8px;
-}
-
-.prod-chart canvas { width: 100% !important; height: 100% !important; }
-
-/* Operations buttons */
-.ops-grid {
-  display: flex; gap: 8px; flex-wrap: wrap;
-}
-
-.ops-btn {
-  padding: 8px 16px;
-  background: rgba(26,26,46,0.8);
-  border: 1px solid rgba(127,140,141,0.3);
-  color: var(--text);
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.8rem; font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.ops-btn:hover {
-  border-color: var(--crude-gold);
-  background: rgba(212,160,23,0.1);
-  color: var(--crude-gold);
-}
-
-.ops-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(212,160,23,0.3); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(212,160,23,0.5); }
-
-/* Game Over */
-#gameOverScreen {
-  flex-direction: column; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(231,76,60,0.08) 0%, transparent 60%),
-              linear-gradient(180deg, #050508 0%, #0d1117 100%);
-}
-
-.gameover-title {
-  font-family: 'Teko', sans-serif;
-  font-size: 5rem; font-weight: 700;
-  color: var(--danger-red);
-  letter-spacing: 12px;
-  text-shadow: 0 0 40px rgba(231,76,60,0.3);
-}
-
-.gameover-stats {
-  margin: 30px 0;
-  text-align: center;
-}
-
-.gameover-stat {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 1rem; color: var(--silver);
-  margin: 8px 0;
-}
-
-.gameover-stat span {
-  color: var(--crude-gold);
-  font-size: 1.2rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .game-logo { font-size: 3.5rem; letter-spacing: 8px; }
-  .hud-metrics { gap: 12px; }
-  .hud-metric { min-width: 70px; }
-  .hud-metric-value { font-size: 1.2rem; }
-  .basin-panel { width: 100%; right: -100%; }
+#gameScreen{flex-direction:column;position:relative}
+#mapCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;cursor:grab}
+#mapCanvas:active{cursor:grabbing}
+.hud{position:relative;z-index:10;pointer-events:none}
+.hud>*{pointer-events:auto}
+
+.hud-top{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 20px;background:linear-gradient(180deg,rgba(10,10,10,.95) 0%,rgba(10,10,10,.7) 70%,transparent 100%)}
+.hud-logo{font-family:'Teko',sans-serif;font-size:1.5rem;font-weight:600;color:var(--gold);letter-spacing:5px}
+.hud-loc{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--steel);letter-spacing:2px;margin-top:2px}
+.hud-date{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--silver);letter-spacing:2px;margin-top:4px}
+
+.hud-metrics{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.hud-m{text-align:center;min-width:80px}
+.hud-m-label{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--steel);letter-spacing:1.5px;text-transform:uppercase}
+.hud-m-val{font-family:'Teko',sans-serif;font-size:1.4rem;font-weight:600;line-height:1.1}
+.hud-m-val.gold{color:var(--gold)}.hud-m-val.green{color:var(--green)}.hud-m-val.blue{color:var(--blue)}.hud-m-val.red{color:var(--red)}
+
+.time-row{display:flex;gap:5px;margin-top:6px}
+.t-btn{padding:3px 10px;background:rgba(212,160,23,0.08);border:1px solid rgba(212,160,23,0.25);color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:.7rem;cursor:pointer;transition:all .2s}
+.t-btn:hover{background:rgba(212,160,23,0.2);border-color:var(--gold)}
+.t-btn.act{padding:3px 14px;border-color:var(--green);color:var(--green)}
+
+/* ═══ BOTTOM PANEL ═══ */
+.hud-bot{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(8,8,12,.97) 0%,rgba(8,8,12,.85) 85%,transparent 100%);padding:16px 20px 12px;z-index:10}
+.tabs{display:flex;gap:3px;margin-bottom:10px}
+.tab{padding:5px 16px;background:transparent;border:1px solid rgba(127,140,141,0.15);border-bottom:none;color:var(--steel);font-family:'Chakra Petch',sans-serif;font-size:.75rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.tab.on,.tab:hover{color:var(--gold);border-color:rgba(212,160,23,0.3);background:rgba(212,160,23,0.04)}
+.tc{display:none;min-height:130px;max-height:180px;overflow-y:auto}.tc.on{display:block}
+
+/* Well cards */
+.wl{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.wl::-webkit-scrollbar{height:5px}.wl::-webkit-scrollbar-thumb{background:rgba(212,160,23,0.2);border-radius:3px}
+.wc{min-width:250px;max-width:270px;background:linear-gradient(135deg,rgba(20,20,36,.9),rgba(12,40,70,.4));border:1px solid rgba(212,160,23,0.12);border-left:3px solid var(--gold);padding:10px 12px;flex-shrink:0;cursor:pointer;transition:all .3s}
+.wc:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 20px rgba(212,160,23,0.08)}
+.wc.prod{border-left-color:var(--green)}.wc.drill{border-left-color:var(--blue)}.wc.comp{border-left-color:var(--amber)}.wc.flow{border-left-color:#9b59b6}
+.wc-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.wc-n{font-family:'Teko',sans-serif;font-size:1rem;font-weight:500;letter-spacing:1px}
+.wc-s{font-family:'Share Tech Mono',monospace;font-size:.55rem;padding:2px 6px;border-radius:2px;letter-spacing:1px}
+.s-prod{background:rgba(39,174,96,0.15);color:var(--green)}
+.s-drill{background:rgba(45,156,219,0.15);color:var(--blue)}
+.s-comp{background:rgba(244,165,35,0.15);color:var(--amber)}
+.s-perm{background:rgba(127,140,141,0.15);color:var(--steel)}
+.s-lease{background:rgba(212,160,23,0.1);color:var(--gold)}
+.s-flow{background:rgba(155,89,182,0.15);color:#9b59b6}
+.wc-g{display:grid;grid-template-columns:1fr 1fr;gap:3px;font-family:'Share Tech Mono',monospace;font-size:.65rem}
+.wc-gl{color:var(--steel)}.wc-gv{text-align:right;color:var(--text)}
+.prog{width:100%;height:3px;background:rgba(127,140,141,0.15);margin-top:5px;overflow:hidden}
+.prog-f{height:100%;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width .5s}
+.wc-btn{width:100%;margin-top:6px;padding:5px;background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);color:var(--green);font-family:'Chakra Petch',sans-serif;font-size:.7rem;font-weight:600;cursor:pointer;letter-spacing:1px;transition:all .2s}
+.wc-btn:hover{background:rgba(39,174,96,0.2);border-color:var(--green)}
+
+/* Pad cards */
+.pad-card{background:linear-gradient(135deg,rgba(20,20,36,.9),rgba(12,40,70,.4));border:1px solid rgba(212,160,23,0.12);padding:12px;margin-bottom:8px}
+.pad-title{font-family:'Teko',sans-serif;font-size:1.1rem;color:var(--gold);letter-spacing:2px}
+.pad-wells{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.pad-well-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:'Share Tech Mono',monospace;border:2px solid}
+
+/* ═══ RIGHT PANEL ═══ */
+.r-panel{position:fixed;right:-440px;top:0;bottom:0;width:420px;background:linear-gradient(180deg,rgba(8,12,20,.98),rgba(8,8,12,.98));border-left:1px solid rgba(212,160,23,0.15);z-index:50;transition:right .4s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:20px 24px}
+.r-panel.open{right:0}
+.r-panel-t{font-family:'Teko',sans-serif;font-size:1.6rem;font-weight:600;color:var(--gold);letter-spacing:4px;margin-bottom:12px}
+.r-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--steel);font-size:1.4rem;cursor:pointer}
+.r-close:hover{color:var(--text)}
+.r-input{width:100%;padding:10px 12px;background:rgba(20,20,36,0.8);border:1px solid rgba(212,160,23,0.15);color:var(--text);font-family:'Chakra Petch',sans-serif;font-size:.85rem;margin:8px 0;outline:none}
+.r-input:focus{border-color:var(--gold)}
+.r-btn{width:100%;padding:12px;background:linear-gradient(135deg,rgba(212,160,23,0.15),rgba(212,160,23,0.08));border:2px solid var(--gold);color:var(--gold);font-family:'Teko',sans-serif;font-size:1.2rem;font-weight:500;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:8px}
+.r-btn:hover{background:rgba(212,160,23,0.25);box-shadow:0 0 30px rgba(212,160,23,0.15)}
+.r-btn:disabled{opacity:.3;cursor:not-allowed}
+.r-section{margin:16px 0 8px;font-family:'Teko',sans-serif;font-size:1.1rem;color:var(--amber);letter-spacing:2px}
+.r-row{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--silver);padding:3px 0;border-bottom:1px solid rgba(127,140,141,0.06)}
+.r-row span{color:var(--text)}
+
+/* ═══ WELL DETAIL PANEL ═══ */
+.d-panel{position:fixed;left:-480px;top:0;bottom:0;width:460px;background:linear-gradient(180deg,rgba(8,12,20,.98),rgba(8,8,12,.98));border-right:1px solid rgba(212,160,23,0.15);z-index:50;transition:left .4s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:20px 24px}
+.d-panel.open{left:0}
+
+.lift-options{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.lift-btn{padding:8px 14px;background:rgba(20,20,36,.8);border:1px solid rgba(127,140,141,0.2);color:var(--silver);font-family:'Chakra Petch',sans-serif;font-size:.75rem;cursor:pointer;transition:all .2s;flex:1;text-align:center;min-width:90px}
+.lift-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(212,160,23,0.06)}
+.lift-btn.sel{border-color:var(--gold);color:var(--gold);background:rgba(212,160,23,0.1);border-width:2px}
+.lift-btn .cost{display:block;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--steel);margin-top:2px}
+
+/* ═══ EVENT TOAST ═══ */
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);padding:14px 28px;z-index:200;animation:tIn .4s ease-out,tOut .4s ease-in 4.5s forwards;max-width:520px;text-align:center}
+.toast.bad{background:linear-gradient(135deg,rgba(30,0,0,.95),rgba(50,0,0,.95));border:1px solid var(--red);box-shadow:0 0 40px rgba(231,76,60,0.15)}
+.toast.good{background:linear-gradient(135deg,rgba(0,30,0,.95),rgba(0,50,0,.95));border:1px solid var(--green);box-shadow:0 0 40px rgba(39,174,96,0.15)}
+.toast-t{font-family:'Teko',sans-serif;font-size:1.15rem;font-weight:600;letter-spacing:2px}
+.toast-d{font-size:.78rem;color:var(--silver);margin-top:3px}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes tOut{from{opacity:1}to{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+
+/* ═══ GAME OVER ═══ */
+#gameOver{flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse,rgba(231,76,60,0.06),transparent 60%),linear-gradient(180deg,#030305,#0d1117)}
+.go-t{font-family:'Teko',sans-serif;font-size:5rem;font-weight:700;color:var(--red);letter-spacing:12px;text-shadow:0 0 40px rgba(231,76,60,0.3)}
+.go-sub{font-family:'Chakra Petch',sans-serif;color:var(--steel);letter-spacing:3px;margin-top:6px}
+.go-stats{margin:30px 0;text-align:center}
+.go-stat{font-family:'Share Tech Mono',monospace;font-size:.95rem;color:var(--silver);margin:8px 0}
+.go-stat span{color:var(--gold);font-size:1.1rem}
+
+/* ═══ MAP LEGEND ═══ */
+.legend{position:fixed;bottom:210px;left:16px;z-index:15;background:rgba(8,8,12,.85);border:1px solid rgba(212,160,23,0.1);padding:10px 14px;font-family:'Share Tech Mono',monospace;font-size:.6rem;pointer-events:none}
+.legend-item{display:flex;align-items:center;gap:6px;margin:3px 0;color:var(--silver)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+
+/* ═══ MINI MAP ═══ */
+.minimap{position:fixed;top:90px;right:16px;width:160px;height:120px;background:rgba(8,8,12,.8);border:1px solid rgba(212,160,23,0.15);z-index:15;overflow:hidden}
+.minimap canvas{width:100%;height:100%}
+
+@media(max-width:768px){
+  .logo{font-size:3.5rem;letter-spacing:6px}
+  .hud-metrics{gap:10px}
+  .r-panel,.d-panel{width:100%}
+  .r-panel{right:-100%}.d-panel{left:-100%}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══ MAIN MENU ═══ -->
+<!-- MAIN MENU -->
 <div id="mainMenu" class="screen active">
-  <canvas id="menuCanvas" class="menu-bg-canvas"></canvas>
+  <canvas id="menuBg" class="menu-bg" style="position:absolute;top:0;left:0;width:100%;height:100%"></canvas>
   <div class="menu-content">
-    <div class="game-logo">
-      <span class="oil-icon">🛢️</span> CRUDE EMPIRE
-    </div>
-    <div class="game-tagline">Drill · Produce · Dominate</div>
-    <button class="menu-btn primary" onclick="startGame()">NEW GAME</button>
+    <div class="logo">🛢️ CRUDE EMPIRE</div>
+    <div class="tagline">Williston Basin Edition</div>
+    <button class="menu-btn primary" onclick="startGame()">DRILL THE BAKKEN</button>
     <button class="menu-btn" onclick="showHow()">HOW TO PLAY</button>
+    <div class="menu-sub">V3.0 — BAKKEN / WILLISTON BASIN — $100M START</div>
   </div>
-  <div class="menu-version">V2.0 — THREE.JS ENGINE — $100M START</div>
 </div>
 
-<!-- ═══ HOW TO PLAY ═══ -->
-<div id="howScreen" class="screen" style="flex-direction:column; align-items:center; justify-content:center; background:#0d1117;">
-  <div style="max-width:600px; padding:40px; text-align:center;">
-    <div style="font-family:'Teko',sans-serif; font-size:2.5rem; color:var(--crude-gold); letter-spacing:6px; margin-bottom:20px;">HOW TO PLAY</div>
-    <div style="text-align:left; color:var(--silver); line-height:2; font-size:0.9rem;">
-      <p>🏁 <strong style="color:var(--text)">START</strong> — You begin with <span style="color:var(--crude-gold)">$100,000,000</span> in cash.</p>
-      <p>🗺️ <strong style="color:var(--text)">ACQUIRE</strong> — Click basins on the 3D map or use the panel to buy leases.</p>
-      <p>⛏️ <strong style="color:var(--text)">DRILL</strong> — Start permitting, then drilling, completion, and flowback.</p>
-      <p>🏗️ <strong style="color:var(--text)">BUILD</strong> — Facilities are built automatically during completion.</p>
-      <p>🛢️ <strong style="color:var(--text)">PRODUCE</strong> — Revenue flows based on WTI & Henry Hub prices.</p>
-      <p>🔧 <strong style="color:var(--text)">MANAGE</strong> — Install artificial lift, perform workovers.</p>
-      <p>⚠️ <strong style="color:var(--text)">SURVIVE</strong> — Random events can cost you millions. Don't go bankrupt!</p>
-      <p>📈 <strong style="color:var(--text)">WIN</strong> — Grow your portfolio value as high as possible.</p>
+<!-- HOW TO PLAY -->
+<div id="howScreen" class="screen">
+  <div class="how-box">
+    <div class="how-title">HOW TO PLAY</div>
+    <div class="how-text">
+      <p>🏁 <strong>START</strong> — You have <span class="hl">$100,000,000</span> to build a Bakken empire.</p>
+      <p>🗺️ <strong>MAP</strong> — Click the satellite map to place well pads. Drag to pan, scroll to zoom.</p>
+      <p>🏗️ <strong>PADS</strong> — Build multi-well pads with 1-6 wells each. Shared facilities save money.</p>
+      <p>⛏️ <strong>DRILL</strong> — Each well goes through Permitting → Drilling → Completing → Flowback → Producing.</p>
+      <p>🛢️ <strong>PRODUCE</strong> — Watch animated pumpjacks and rigs on the map as wells produce.</p>
+      <p>🔧 <strong>LIFT</strong> — Choose Rod Pump, ESP, or Gas Lift when natural flow declines.</p>
+      <p>💰 <strong>REVENUE</strong> — Based on simulated WTI & gas prices with realistic decline curves.</p>
+      <p>⚠️ <strong>EVENTS</strong> — Blowouts, freeze-offs, stuck pipe, and more. Stay sharp.</p>
+      <p>💀 <strong>GAME OVER</strong> — If cash drops below -$10M, you're bankrupt.</p>
     </div>
-    <button class="menu-btn" style="margin:30px auto 0;" onclick="hideHow()">BACK</button>
+    <button class="menu-btn" style="margin:24px auto 0" onclick="hideHow()">BACK</button>
   </div>
 </div>
 
-<!-- ═══ GAME SCREEN ═══ -->
+<!-- GAME SCREEN -->
 <div id="gameScreen" class="screen">
-  <canvas id="three-canvas"></canvas>
+  <canvas id="mapCanvas"></canvas>
   
+  <!-- Legend -->
+  <div class="legend">
+    <div style="font-size:.7rem;color:var(--gold);letter-spacing:2px;margin-bottom:4px;">MAP LEGEND</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Producing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Drilling</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Completing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9b59b6"></div> Flowback</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--steel)"></div> Lease / Permit</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Event Active</div>
+    <div class="legend-item" style="margin-top:4px;border-top:1px solid rgba(127,140,141,.1);padding-top:4px">
+      <svg width="12" height="12"><rect x="2" y="2" width="8" height="8" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="2,1"/></svg> Facility
+    </div>
+  </div>
+
+  <!-- HUD -->
   <div class="hud">
-    <!-- Top HUD -->
     <div class="hud-top">
       <div>
-        <div class="hud-logo" onclick="toggleBasinPanel()">🛢️ CRUDE EMPIRE</div>
+        <div class="hud-logo">🛢️ CRUDE EMPIRE</div>
+        <div class="hud-loc">WILLISTON BASIN · NORTH DAKOTA · BAKKEN / THREE FORKS</div>
         <div class="hud-date" id="hudDate">JANUARY 2026</div>
-        <div class="time-controls">
-          <button class="time-btn" onclick="advanceMonth()">▶ MONTH</button>
-          <button class="time-btn" onclick="advanceMonths(6)">▶▶ 6 MO</button>
-          <button class="time-btn" onclick="advanceMonths(12)">▶▶▶ YEAR</button>
-          <button class="time-btn" onclick="toggleBasinPanel()" style="border-color:var(--drill-green); color:var(--drill-green);">+ BUY LEASE</button>
+        <div class="time-row">
+          <button class="t-btn" onclick="advMonth()">▶ MONTH</button>
+          <button class="t-btn" onclick="advMonths(6)">▶▶ 6MO</button>
+          <button class="t-btn" onclick="advMonths(12)">▶▶▶ YEAR</button>
+          <button class="t-btn act" onclick="openAcquire()">+ NEW PAD</button>
         </div>
       </div>
       <div class="hud-metrics">
-        <div class="hud-metric">
-          <div class="hud-metric-label">CASH</div>
-          <div class="hud-metric-value gold" id="hudCash">$100.0M</div>
-        </div>
-        <div class="hud-metric">
-          <div class="hud-metric-label">WTI</div>
-          <div class="hud-metric-value green" id="hudWTI">$70.00</div>
-        </div>
-        <div class="hud-metric">
-          <div class="hud-metric-label">GAS</div>
-          <div class="hud-metric-value blue" id="hudGas">$3.50</div>
-        </div>
-        <div class="hud-metric">
-          <div class="hud-metric-label">OIL bbl/d</div>
-          <div class="hud-metric-value gold" id="hudOilRate">0</div>
-        </div>
-        <div class="hud-metric">
-          <div class="hud-metric-label">GAS mcf/d</div>
-          <div class="hud-metric-value blue" id="hudGasRate">0</div>
-        </div>
-        <div class="hud-metric">
-          <div class="hud-metric-label">PORTFOLIO</div>
-          <div class="hud-metric-value gold" id="hudPortfolio">$100.0M</div>
-        </div>
+        <div class="hud-m"><div class="hud-m-label">CASH</div><div class="hud-m-val gold" id="hCash">$100.0M</div></div>
+        <div class="hud-m"><div class="hud-m-label">WTI</div><div class="hud-m-val green" id="hWTI">$70.00</div></div>
+        <div class="hud-m"><div class="hud-m-label">GAS</div><div class="hud-m-val blue" id="hGas">$3.50</div></div>
+        <div class="hud-m"><div class="hud-m-label">OIL bbl/d</div><div class="hud-m-val gold" id="hOil">0</div></div>
+        <div class="hud-m"><div class="hud-m-label">GAS mcf/d</div><div class="hud-m-val blue" id="hGR">0</div></div>
+        <div class="hud-m"><div class="hud-m-label">WELLS</div><div class="hud-m-val" id="hWells" style="color:var(--text)">0</div></div>
+        <div class="hud-m"><div class="hud-m-label">PORTFOLIO</div><div class="hud-m-val gold" id="hPV">$100.0M</div></div>
       </div>
     </div>
 
-    <!-- Bottom Panel -->
-    <div class="hud-bottom">
-      <div class="bottom-tabs">
-        <button class="tab-btn active" onclick="switchTab('wells')">🛢️ WELLS</button>
-        <button class="tab-btn" onclick="switchTab('production')">📊 PRODUCTION</button>
-        <button class="tab-btn" onclick="switchTab('operations')">🔧 OPERATIONS</button>
-        <button class="tab-btn" onclick="switchTab('events')">⚡ EVENTS</button>
+    <div class="hud-bot">
+      <div class="tabs">
+        <button class="tab on" data-t="pads" onclick="swTab(this,'pads')">🏗️ PADS</button>
+        <button class="tab" data-t="wells" onclick="swTab(this,'wells')">🛢️ WELLS</button>
+        <button class="tab" data-t="prod" onclick="swTab(this,'prod')">📊 PRODUCTION</button>
+        <button class="tab" data-t="ops" onclick="swTab(this,'ops')">🔧 OPERATIONS</button>
+        <button class="tab" data-t="events" onclick="swTab(this,'events')">⚡ EVENTS</button>
       </div>
-      <div id="tab-wells" class="tab-content active">
-        <div class="well-list" id="wellList">
-          <div style="color:var(--steel); font-size:0.85rem; padding:20px; text-align:center; width:100%;">
-            No wells yet. Click <strong style="color:var(--drill-green);">+ BUY LEASE</strong> to acquire your first lease.
-          </div>
-        </div>
-      </div>
-      <div id="tab-production" class="tab-content">
-        <div class="gauge-row" id="productionGauges">
-          <div style="color:var(--steel); font-size:0.85rem;">Advance the game to see production data.</div>
-        </div>
-      </div>
-      <div id="tab-operations" class="tab-content">
-        <div id="operationsContent">
-          <div style="color:var(--steel); font-size:0.85rem;">Select a well to see available operations.</div>
-        </div>
-      </div>
-      <div id="tab-events" class="tab-content">
-        <div id="eventLog" style="max-height:120px; overflow-y:auto;">
-          <div style="color:var(--steel); font-size:0.85rem;">No events yet.</div>
-        </div>
-      </div>
+      <div id="tc-pads" class="tc on"><div id="padList" style="color:var(--steel);font-size:.82rem">No pads yet. Click <strong style="color:var(--green)">+ NEW PAD</strong> to get started.</div></div>
+      <div id="tc-wells" class="tc"><div class="wl" id="wellList"></div></div>
+      <div id="tc-prod" class="tc"><div id="prodArea" style="color:var(--steel);font-size:.82rem">Advance the game to see production.</div></div>
+      <div id="tc-ops" class="tc"><div id="opsArea" style="color:var(--steel);font-size:.82rem">No producing wells yet.</div></div>
+      <div id="tc-events" class="tc"><div id="evtArea" style="color:var(--steel);font-size:.82rem">No events yet.</div></div>
     </div>
   </div>
 
-  <!-- Basin Panel (Slide-in) -->
-  <div class="basin-panel" id="basinPanel">
-    <button class="panel-close" onclick="toggleBasinPanel()">✕</button>
-    <div class="basin-panel-title">ACQUIRE LEASE</div>
-    <p style="color:var(--steel); font-size:0.8rem; margin-bottom:16px;">Select a basin and name your well.</p>
-    <div id="basinOptions"></div>
-    <input class="panel-input" id="wellNameInput" placeholder="Well Name (e.g., Thunder Horse #1)">
-    <button class="panel-btn" id="acquireBtn" onclick="acquireLease()">ACQUIRE LEASE</button>
-    <div id="leaseEstimate" style="margin-top:12px; font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--steel);"></div>
+  <!-- Right Panel: Acquire -->
+  <div class="r-panel" id="acqPanel">
+    <button class="r-close" onclick="closeAcquire()">✕</button>
+    <div class="r-panel-t">NEW WELL PAD</div>
+    <p style="color:var(--steel);font-size:.78rem;margin-bottom:12px">Build a multi-well pad in the Bakken. Shared surface facilities reduce cost per well.</p>
+    
+    <div class="r-section">PAD NAME</div>
+    <input class="r-input" id="padNameIn" placeholder="e.g., Thunder Horse Pad A">
+    
+    <div class="r-section">NUMBER OF WELLS</div>
+    <div style="display:flex;gap:6px;margin:6px 0" id="wellCountBtns"></div>
+    
+    <div class="r-section">FORMATION TARGET</div>
+    <div style="display:flex;gap:6px;margin:6px 0">
+      <button class="lift-btn sel" onclick="selFormation(this,'MB')" data-f="MB">Middle Bakken<span class="cost">Higher Oil Cut</span></button>
+      <button class="lift-btn" onclick="selFormation(this,'TF')" data-f="TF">Three Forks<span class="cost">Higher Gas, Lower Cost</span></button>
+    </div>
+
+    <div class="r-section">LATERAL LENGTH</div>
+    <div style="display:flex;gap:6px;margin:6px 0">
+      <button class="lift-btn" onclick="selLateral(this,5000)" data-l="5000">5,000 ft<span class="cost">Short, Cheap</span></button>
+      <button class="lift-btn sel" onclick="selLateral(this,10000)" data-l="10000">10,000 ft<span class="cost">Standard</span></button>
+      <button class="lift-btn" onclick="selLateral(this,15000)" data-l="15000">15,000 ft<span class="cost">Extended, High IP</span></button>
+    </div>
+    
+    <div class="r-section">COST ESTIMATE</div>
+    <div id="costEst" style="font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--silver)"></div>
+
+    <button class="r-btn" onclick="buildPad()" id="buildBtn">BUILD PAD</button>
+  </div>
+
+  <!-- Left Panel: Well Detail -->
+  <div class="d-panel" id="detPanel">
+    <button class="r-close" onclick="closeDetail()" style="right:auto;left:auto;position:absolute;right:14px">✕</button>
+    <div id="detContent"></div>
   </div>
 </div>
 
-<!-- ═══ GAME OVER ═══ -->
-<div id="gameOverScreen" class="screen">
-  <div class="gameover-title">BANKRUPT</div>
-  <div style="font-family:'Chakra Petch',sans-serif; color:var(--steel); letter-spacing:3px; margin-top:8px;">YOUR COMPANY HAS BEEN LIQUIDATED</div>
-  <div class="gameover-stats" id="gameoverStats"></div>
+<!-- GAME OVER -->
+<div id="gameOver" class="screen">
+  <div class="go-t">BANKRUPT</div>
+  <div class="go-sub">YOUR COMPANY HAS BEEN LIQUIDATED</div>
+  <div class="go-stats" id="goStats"></div>
   <button class="menu-btn primary" onclick="location.reload()">TRY AGAIN</button>
 </div>
 
 <script>
-// ════════════════════════════════════════════
-// GAME ENGINE (ported to JS)
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
+// GAME ENGINE — BAKKEN FOCUSED
+// ════════════════════════════════════════
 
-const BASINS = {
-  PERMIAN: {
-    name: 'Permian Basin', emoji: '🏜️', 
-    desc: 'Premier unconventional play. Wolfcamp & Bone Spring. High IP, excellent economics.',
-    mapPos: { x: -0.8, z: 0.3 },
-    leaseCostPerAcre: [8000, 25000], drillCost: [3500000, 6000000],
-    completionCost: [4000000, 8000000], facilityCost: [500000, 1500000],
-    ipOil: [800, 2200], ipGas: [1500, 5000], bFactor: [1.0, 1.6], di: [0.65, 0.85],
-    initialGOR: [800, 2500], gorRate: 0.15, wcInitial: [0.15, 0.40], wcRate: 0.08,
-    loe: [6, 12], drillDays: [12, 25], compDays: [14, 30], facDays: [20, 45], risk: 0.15
-  },
-  BAKKEN: {
-    name: 'Bakken', emoji: '❄️',
-    desc: 'Williston Basin. Strong oil cut, harsh winters. Middle Bakken & Three Forks.',
-    mapPos: { x: -0.5, z: -1.2 },
-    leaseCostPerAcre: [3000, 12000], drillCost: [4000000, 7000000],
-    completionCost: [3500000, 6500000], facilityCost: [600000, 1800000],
-    ipOil: [600, 1800], ipGas: [800, 2500], bFactor: [0.8, 1.4], di: [0.60, 0.80],
-    initialGOR: [600, 1800], gorRate: 0.12, wcInitial: [0.20, 0.50], wcRate: 0.10,
-    loe: [8, 15], drillDays: [15, 30], compDays: [12, 25], facDays: [25, 50], risk: 0.20
-  },
-  EAGLE_FORD: {
-    name: 'Eagle Ford', emoji: '🦅',
-    desc: 'South Texas. Oil, condensate & gas windows. Excellent rock quality.',
-    mapPos: { x: -0.6, z: 0.9 },
-    leaseCostPerAcre: [5000, 18000], drillCost: [3000000, 5500000],
-    completionCost: [3500000, 7000000], facilityCost: [400000, 1200000],
-    ipOil: [700, 2000], ipGas: [2000, 8000], bFactor: [0.9, 1.5], di: [0.70, 0.90],
-    initialGOR: [1000, 4000], gorRate: 0.20, wcInitial: [0.10, 0.35], wcRate: 0.06,
-    loe: [5, 10], drillDays: [10, 20], compDays: [10, 22], facDays: [15, 35], risk: 0.12
-  },
-  DJ_BASIN: {
-    name: 'DJ Basin', emoji: '⛰️',
-    desc: 'Colorado Niobrara & Codell. Waxy crude, strict regulations.',
-    mapPos: { x: -0.7, z: -0.5 },
-    leaseCostPerAcre: [4000, 15000], drillCost: [2800000, 5000000],
-    completionCost: [3000000, 6000000], facilityCost: [450000, 1300000],
-    ipOil: [500, 1400], ipGas: [1000, 3500], bFactor: [0.9, 1.3], di: [0.55, 0.75],
-    initialGOR: [700, 2200], gorRate: 0.10, wcInitial: [0.15, 0.45], wcRate: 0.09,
-    loe: [7, 13], drillDays: [12, 22], compDays: [12, 24], facDays: [20, 40], risk: 0.18
-  },
-  SCOOP_STACK: {
-    name: 'SCOOP/STACK', emoji: '🌪️',
-    desc: 'Oklahoma Anadarko Basin. High GOR, gassy wells. Woodford & Meramec.',
-    mapPos: { x: -0.4, z: 0.2 },
-    leaseCostPerAcre: [3000, 10000], drillCost: [3200000, 5500000],
-    completionCost: [3500000, 6500000], facilityCost: [500000, 1400000],
-    ipOil: [400, 1200], ipGas: [3000, 10000], bFactor: [0.8, 1.4], di: [0.55, 0.78],
-    initialGOR: [2000, 8000], gorRate: 0.18, wcInitial: [0.10, 0.30], wcRate: 0.05,
-    loe: [5.5, 11], drillDays: [14, 28], compDays: [14, 28], facDays: [22, 45], risk: 0.14
-  }
+const MONTHS=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+const rand=(a,b)=>Math.random()*(b-a)+a;
+const randI=(a,b)=>Math.floor(rand(a,b+1));
+const fmt$=(v,s)=>{if(s){if(Math.abs(v)>=1e9)return'$'+(v/1e9).toFixed(1)+'B';if(Math.abs(v)>=1e6)return'$'+(v/1e6).toFixed(1)+'M';if(Math.abs(v)>=1e3)return'$'+(v/1e3).toFixed(0)+'K'}return'$'+v.toLocaleString('en-US',{maximumFractionDigits:0})};
+const fmtN=(v,d=0)=>v.toLocaleString('en-US',{maximumFractionDigits:d});
+
+// Bakken formation configs
+const FORMATIONS = {
+  MB: { name:'Middle Bakken', ipOilMult:1.0, ipGasMult:0.7, costMult:1.0, gorBase:[600,1400], gorRate:0.10 },
+  TF: { name:'Three Forks', ipOilMult:0.85, ipGasMult:1.3, costMult:0.9, gorBase:[900,2200], gorRate:0.14 }
 };
 
-const EVENTS = [
-  { name:'Wellbore Integrity Issue', desc:'Casing leak. Workover required.', cat:'ops', cost:[200000,800000], prodImpact:0, dur:2, prob:0.03 },
-  { name:'Surface Equipment Failure', desc:'Separator malfunction.', cat:'ops', cost:[25000,150000], prodImpact:0.3, dur:1, prob:0.06 },
-  { name:'Blowout', desc:'Lost well control! Emergency response.', cat:'ops', cost:[1000000,5000000], prodImpact:0, dur:3, prob:0.008 },
-  { name:'Winter Storm Freeze-Off', desc:'All wells shut in temporarily.', cat:'weather', cost:[50000,300000], prodImpact:0, dur:1, prob:0.04 },
-  { name:'Hurricane Impact', desc:'Gulf Coast ops impacted.', cat:'weather', cost:[100000,500000], prodImpact:0.2, dur:1, prob:0.03 },
-  { name:'Regulatory Inspection', desc:'Minor compliance issues found.', cat:'reg', cost:[10000,100000], prodImpact:1, dur:0, prob:0.08 },
-  { name:'Environmental Violation', desc:'Spill reported. Remediation required.', cat:'reg', cost:[200000,1500000], prodImpact:0.5, dur:2, prob:0.02 },
-  { name:'Frac Hit', desc:'Communication with offset operator well.', cat:'ops', cost:[100000,600000], prodImpact:0.7, dur:1, prob:0.05 },
-  { name:'Pipeline Curtailment', desc:'Midstream capacity constraints.', cat:'ops', cost:[0,50000], prodImpact:0.6, dur:2, prob:0.04 },
-  { name:'Stuck Pipe', desc:'Fishing job required.', cat:'ops', cost:[300000,1200000], prodImpact:1, dur:1, prob:0.04 },
-  { name:'Bonus Production! 🎉', desc:'Well outperforming type curve!', cat:'good', cost:[0,0], prodImpact:1.3, dur:6, prob:0.06 },
-  { name:'Tax Incentive 💰', desc:'State tax holiday on completions.', cat:'good', cost:[-200000,-50000], prodImpact:1, dur:0, prob:0.03 },
+// Lateral length scaling
+const LATERAL_SCALE = { 5000:{ipMult:0.55,costMult:0.65}, 10000:{ipMult:1.0,costMult:1.0}, 15000:{ipMult:1.35,costMult:1.3} };
+
+const LIFT_TYPES = {
+  'Natural Flow': { cost:[0,0], efficiency:1.0, opexAdd:0, icon:'🔵' },
+  'Rod Pump': { cost:[80000,180000], efficiency:0.9, opexAdd:1.5, icon:'⚙️' },
+  'ESP': { cost:[150000,350000], efficiency:0.95, opexAdd:3.0, icon:'⚡' },
+  'Gas Lift': { cost:[200000,400000], efficiency:0.92, opexAdd:2.0, icon:'💨' }
+};
+
+const EVENTS=[
+  {name:'Wellbore Integrity Issue',desc:'Casing leak detected. Workover rig mobilized.',cat:'ops',cost:[200000,800000],pImpact:0,dur:2,prob:.03},
+  {name:'Surface Equipment Failure',desc:'Separator or heater treater malfunction.',cat:'ops',cost:[25000,150000],pImpact:.3,dur:1,prob:.06},
+  {name:'Blowout',desc:'Lost well control! Emergency response team on site.',cat:'ops',cost:[1000000,5000000],pImpact:0,dur:3,prob:.006},
+  {name:'Polar Vortex Freeze-Off',desc:'Extreme cold. All pad wells shut in.',cat:'weather',cost:[80000,400000],pImpact:0,dur:1,prob:.05},
+  {name:'Spring Breakup',desc:'Road restrictions. No rig moves for 45 days.',cat:'weather',cost:[30000,100000],pImpact:1,dur:1,prob:.04},
+  {name:'NDIC Inspection',desc:'North Dakota regulators on site.',cat:'reg',cost:[10000,80000],pImpact:1,dur:0,prob:.07},
+  {name:'Saltwater Spill',desc:'Produced water release. Remediation required.',cat:'reg',cost:[250000,2000000],pImpact:.5,dur:2,prob:.02},
+  {name:'Frac Hit on Offset',desc:'Communication with nearby operator well.',cat:'ops',cost:[100000,600000],pImpact:.7,dur:1,prob:.04},
+  {name:'Stuck Pipe',desc:'BHA stuck. Fishing or sidetrack required.',cat:'ops',cost:[300000,1500000],pImpact:1,dur:1,prob:.035},
+  {name:'Gas Plant Curtailment',desc:'Hess Tioga plant at capacity. Gas flaring limits.',cat:'ops',cost:[0,50000],pImpact:.7,dur:2,prob:.04},
+  {name:'SWD Capacity Issue',desc:'Disposal well at capacity. Trucking water.',cat:'ops',cost:[50000,300000],pImpact:.9,dur:2,prob:.04},
+  {name:'Outperforming Type Curve! 🎉',desc:'Better reservoir quality than expected!',cat:'good',cost:[0,0],pImpact:1.35,dur:6,prob:.05},
+  {name:'Tax Incentive 💰',desc:'ND extraction tax holiday triggered.',cat:'good',cost:[-300000,-80000],pImpact:1,dur:0,prob:.03},
+  {name:'Infill Well Interference',desc:'Offset infill well draining your reservoir.',cat:'ops',cost:[50000,200000],pImpact:.8,dur:4,prob:.03},
 ];
 
-function rand(min, max) { return Math.random() * (max - min) + min; }
-function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
-function fmtCurrency(v, short) {
-  if (short) {
-    if (Math.abs(v) >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B';
-    if (Math.abs(v) >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
-    if (Math.abs(v) >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
-  }
-  return '$' + v.toLocaleString('en-US', {maximumFractionDigits:0});
-}
-
-const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
-
-let G = {
-  cash: 100_000_000, wells: [], month: 0, year: 2026,
-  wtiPrice: 70.0, gasPrice: 3.50,
-  totalRevenue: 0, totalOpex: 0, totalCapex: 0,
-  wellCounter: 0, activeEvents: [], eventLog: [],
-  history: [], gameOver: false,
+let G={
+  cash:100_000_000, pads:[], wells:[], month:0, year:2026,
+  wti:70, gas:3.5, tRev:0, tOpex:0, tCapex:0,
+  wCtr:0, pCtr:0, aEvts:[], evtLog:[], hist:[], over:false
 };
 
-function getMonthName() { return MONTHS[G.month % 12]; }
+// Pad structure
+function createPad(name, numWells, formation, lateral, mapX, mapY) {
+  G.pCtr++;
+  let fm = FORMATIONS[formation];
+  let ls = LATERAL_SCALE[lateral];
+  let baseDrillCost = rand(4000000,7000000);
+  let baseCompCost = rand(3500000,6500000);
+  // Shared facility cost (cheaper per well with more wells)
+  let facilityBase = rand(800000,2000000);
+  let facilityCostTotal = facilityBase * (1 + (numWells-1)*0.3); // 30% marginal per additional well
+  let facilityCostPerWell = facilityCostTotal / numWells;
+  
+  let pad = {
+    id:'PAD-'+G.pCtr, name, formation, lateral, numWells,
+    mapX, mapY, facilityCost: facilityCostTotal,
+    facilityBuilt: false, facilityProgress: 0,
+    wells: []
+  };
 
-function declineRate(well, months) {
-  let denom = Math.pow(1 + well.bFactor * well.di * (months / 12), 1 / well.bFactor);
-  return Math.max(1 / denom, 0.05);
+  for(let i=0; i<numWells; i++) {
+    G.wCtr++;
+    let acres = randI(640,1280);
+    let leaseCPA = rand(3000,12000);
+    let leaseCost = acres * leaseCPA;
+    let drillCost = baseDrillCost * fm.costMult * ls.costMult * rand(0.9,1.1);
+    let compCost = baseCompCost * fm.costMult * ls.costMult * rand(0.9,1.1);
+    
+    let well = {
+      id:'W-'+String(G.wCtr).padStart(3,'0'),
+      name: name + ' #' + (i+1),
+      padId: pad.id,
+      status:'Lease Acquired',
+      acres, leaseCost, drillCost, completionCost:compCost,
+      facilityCost: facilityCostPerWell,
+      formation, lateral,
+      // Production params (set at completion)
+      ipOil:0, ipGas:0, bFactor:1.2, di:0.72,
+      gor:1000, gorRate:fm.gorRate,
+      wc:0.3, wcRate:0.10, loe:rand(8,15),
+      oilRate:0, gasRate:0, waterRate:0,
+      cumOil:0, cumGas:0, cumWater:0, cumRev:0, cumOpex:0,
+      monthsOn:0, dInPhase:0, dReq:0,
+      liftType:'Natural Flow', woCount:0,
+      // Map position (offset from pad center)
+      mX: mapX + (i%3)*0.008 - 0.008,
+      mY: mapY + Math.floor(i/3)*0.006,
+      hasEvent: false
+    };
+    
+    G.cash -= leaseCost;
+    G.tCapex += leaseCost;
+    pad.wells.push(well.id);
+    G.wells.push(well);
+  }
+
+  G.pads.push(pad);
+  return pad;
 }
 
-function simulatePrice(current, vol, meanRev, longMean) {
-  let dt = 1/12;
-  let drift = meanRev * (Math.log(longMean) - Math.log(current)) * dt;
-  let shock = vol * Math.sqrt(dt) * (Math.random()*2-1 + Math.random()*2-1) / 1.4; // approx normal
-  return Math.max(current * Math.exp(drift + shock), current * 0.5);
+function startWell(wid) {
+  let w = G.wells.find(x=>x.id===wid);
+  if(!w || w.status!=='Lease Acquired') return;
+  let est = w.drillCost + w.completionCost + w.facilityCost;
+  if(G.cash < est*0.2){alert('Need more cash for D&C!');return}
+  w.status='Permitting'; w.dInPhase=0; w.dReq=randI(15,45);
+  updateAll();
 }
 
-function advanceMonth() {
+function advPhase(w) {
+  let fm = FORMATIONS[w.formation];
+  let ls = LATERAL_SCALE[w.lateral];
+  if(w.status==='Permitting'){
+    w.status='Drilling'; w.dInPhase=0; w.dReq=randI(15,30);
+    G.cash-=w.drillCost; G.tCapex+=w.drillCost;
+  } else if(w.status==='Drilling'){
+    w.status='Completing'; w.dInPhase=0; w.dReq=randI(14,28);
+    G.cash-=w.completionCost; G.tCapex+=w.completionCost;
+  } else if(w.status==='Completing'){
+    w.status='Flowback'; w.dInPhase=0; w.dReq=randI(10,25);
+    G.cash-=w.facilityCost; G.tCapex+=w.facilityCost;
+    // Set production params
+    let baseIP = rand(600,1800);
+    w.ipOil = baseIP * fm.ipOilMult * ls.ipMult * rand(0.85,1.15);
+    w.ipGas = rand(800,2500) * fm.ipGasMult * ls.ipMult * rand(0.85,1.15);
+    w.bFactor = rand(0.8,1.5);
+    w.di = rand(0.58,0.82);
+    w.gor = rand(...fm.gorBase);
+    w.wc = rand(0.20,0.50);
+    w.wcRate = 0.10;
+  } else if(w.status==='Flowback'){
+    w.status='Producing'; w.dInPhase=0;
+  }
+}
+
+function decRate(w,m){let d=Math.pow(1+w.bFactor*w.di*(m/12),1/w.bFactor);return Math.max(1/d,0.05)}
+
+function simPrice(cur,vol,mr,lm){let dt=1/12;let dr=mr*(Math.log(lm)-Math.log(cur))*dt;let sh=vol*Math.sqrt(dt)*((Math.random()+Math.random()+Math.random()-1.5)*1.1);return Math.max(cur*Math.exp(dr+sh),cur*0.5)}
+
+function advMonth(){
   G.month++;
-  G.wtiPrice = +simulatePrice(G.wtiPrice, 0.25, 0.15, 72).toFixed(2);
-  G.gasPrice = +simulatePrice(G.gasPrice, 0.35, 0.20, 3.50).toFixed(2);
-  if (G.month % 12 === 0 && G.month > 0) G.year++;
+  G.wti=+simPrice(G.wti,0.25,0.15,72).toFixed(2);
+  G.gas=+simPrice(G.gas,0.35,0.20,3.50).toFixed(2);
+  if(G.month%12===0&&G.month>0) G.year++;
 
-  let mRev = 0, mOpex = 0, mOil = 0, mGas = 0;
-
-  G.wells.forEach(w => {
-    // Phase advancement
-    if (['Permitting','Drilling','Completing','Flowback'].includes(w.status)) {
-      w.daysInPhase += 30;
-      if (w.daysInPhase >= w.daysRequired) advancePhase(w);
+  let mR=0,mO=0,mOil=0,mGas=0;
+  G.wells.forEach(w=>{
+    if(['Permitting','Drilling','Completing','Flowback'].includes(w.status)){
+      w.dInPhase+=30;
+      if(w.dInPhase>=w.dReq) advPhase(w);
     }
-
-    // Production
-    if (w.status === 'Producing') {
-      let evtMult = 1;
-      G.activeEvents.forEach(e => { if (e.wellId === w.id || e.wellId === 'ALL') evtMult *= e.prodImpact; });
-
-      let df = declineRate(w, w.monthsOnline);
-      let oilRate = w.ipOil * df;
-      let curGOR = w.gor * (1 + w.gorRate * (w.monthsOnline / 12));
-      let gasRate = oilRate * curGOR / 1000;
-      let curWC = Math.min(w.wc + w.wcRate * (w.monthsOnline / 12), 0.95);
-      let totalFluid = oilRate / Math.max(1 - curWC, 0.05);
-      let waterRate = totalFluid - oilRate;
-
-      let days = 30.4;
-      let oilVol = oilRate * days * evtMult;
-      let gasVol = gasRate * days * evtMult;
-      let waterVol = waterRate * days;
-
-      w.oilRate = oilRate; w.gasRate = gasRate; w.waterRate = waterRate;
-      w.cumOil += oilVol; w.cumGas += gasVol; w.cumWater += waterVol;
-      w.monthsOnline++;
-
-      let rev = oilVol * G.wtiPrice + gasVol * G.gasPrice;
-      w.cumRevenue += rev; mRev += rev;
-
-      let boe = oilVol + gasVol / 6;
-      let opex = boe * w.loe + waterVol * 1.5 + rev * 0.05;
-      w.cumOpex += opex; mOpex += opex;
-
-      mOil += oilVol; mGas += gasVol;
+    if(w.status==='Producing'){
+      let em=1;
+      G.aEvts.forEach(e=>{if(e.wid===w.id||e.wid==='ALL')em*=e.pi});
+      let df=decRate(w,w.monthsOn);
+      let or=w.ipOil*df;
+      let cGOR=w.gor*(1+w.gorRate*(w.monthsOn/12));
+      let gr=or*cGOR/1000;
+      let cWC=Math.min(w.wc+w.wcRate*(w.monthsOn/12),0.95);
+      let tf=or/Math.max(1-cWC,0.05);
+      let wr=tf-or;
+      let d=30.4;
+      let oV=or*d*em, gV=gr*d*em, wV=wr*d;
+      w.oilRate=or;w.gasRate=gr;w.waterRate=wr;
+      w.cumOil+=oV;w.cumGas+=gV;w.cumWater+=wV;w.monthsOn++;
+      let rev=oV*G.wti+gV*G.gas;
+      w.cumRev+=rev;mR+=rev;
+      let boe=oV+gV/6;
+      let opex=boe*w.loe+wV*1.5+rev*0.05+(LIFT_TYPES[w.liftType]?.opexAdd||0)*boe;
+      w.cumOpex+=opex;mO+=opex;
+      mOil+=oV;mGas+=gV;
     }
   });
-
-  G.cash += mRev - mOpex;
-  G.totalRevenue += mRev;
-  G.totalOpex += mOpex;
-
-  // Process events
-  G.activeEvents = G.activeEvents.filter(e => { e.durMonths--; return e.durMonths > 0; });
-
-  // Random events
-  G.wells.forEach(w => {
-    if (!['Producing','Drilling','Completing'].includes(w.status)) return;
-    let basin = BASINS[w.basinKey];
-    for (let evt of EVENTS) {
-      let p = evt.prob * basin.risk / 0.15;
-      if (Math.random() < p) {
-        let cost = rand(evt.cost[0], evt.cost[1]);
-        G.activeEvents.push({ name: evt.name, wellId: w.id, prodImpact: evt.prodImpact, durMonths: evt.dur });
-        G.cash -= cost;
-        let entry = { month: G.month, label: getMonthName()+' '+G.year, well: w.name, event: evt.name, desc: evt.desc, cost, cat: evt.cat };
-        G.eventLog.push(entry);
-        showEventToast(entry);
+  G.cash+=mR-mO;G.tRev+=mR;G.tOpex+=mO;
+  G.aEvts=G.aEvts.filter(e=>{e.dur--;return e.dur>0});
+  // Events
+  G.wells.forEach(w=>{
+    w.hasEvent=false;
+    if(!['Producing','Drilling','Completing'].includes(w.status))return;
+    for(let ev of EVENTS){
+      if(Math.random()<ev.prob*1.2){
+        let cost=rand(ev.cost[0],ev.cost[1]);
+        G.aEvts.push({name:ev.name,wid:w.id,pi:ev.pImpact,dur:ev.dur||1});
+        G.cash-=cost;
+        let entry={month:G.month,label:MONTHS[G.month%12]+' '+G.year,well:w.name,event:ev.name,desc:ev.desc,cost,cat:ev.cat};
+        G.evtLog.push(entry);
+        w.hasEvent=true;
+        showToast(entry);
         break;
       }
     }
   });
+  G.hist.push({m:G.month,cash:G.cash,rev:mR,opex:mO,oil:mOil,gas:mGas,wti:G.wti,ng:G.gas});
+  if(G.cash<-10_000_000){G.over=true;showGO()}
+  updateAll();
+}
+function advMonths(n){for(let i=0;i<n;i++)advMonth()}
 
-  G.history.push({ month: G.month, cash: G.cash, rev: mRev, opex: mOpex, oil: mOil, gas: mGas, wti: G.wtiPrice, ng: G.gasPrice });
-
-  if (G.cash < -10_000_000) {
-    G.gameOver = true;
-    showGameOver();
-  }
-
-  updateHUD();
-  update3DScene();
+function installLift(wid,type){
+  let w=G.wells.find(x=>x.id===wid);
+  if(!w||w.status!=='Producing')return;
+  let lt=LIFT_TYPES[type];
+  let cost=rand(...lt.cost);
+  if(G.cash<cost){alert('Insufficient funds!');return}
+  w.liftType=type;G.cash-=cost;G.tCapex+=cost;
+  w.ipOil*=lt.efficiency*1.12;
+  updateAll();closeDetail();
 }
 
-function advanceMonths(n) { for (let i = 0; i < n; i++) advanceMonth(); }
-
-function advancePhase(w) {
-  let basin = BASINS[w.basinKey];
-  if (w.status === 'Permitting') {
-    w.status = 'Drilling'; w.daysInPhase = 0;
-    w.daysRequired = randInt(...basin.drillDays);
-    G.cash -= w.drillCost; G.totalCapex += w.drillCost;
-  } else if (w.status === 'Drilling') {
-    w.status = 'Completing'; w.daysInPhase = 0;
-    w.daysRequired = randInt(...basin.compDays);
-    G.cash -= w.completionCost; G.totalCapex += w.completionCost;
-  } else if (w.status === 'Completing') {
-    w.status = 'Flowback'; w.daysInPhase = 0;
-    w.daysRequired = randInt(7, 21);
-    G.cash -= w.facilityCost; G.totalCapex += w.facilityCost;
-    w.ipOil = rand(...basin.ipOil);
-    w.ipGas = rand(...basin.ipGas);
-    w.bFactor = rand(...basin.bFactor);
-    w.di = rand(...basin.di);
-    w.gor = rand(...basin.initialGOR);
-    w.gorRate = basin.gorRate;
-    w.wc = rand(...basin.wcInitial);
-    w.wcRate = basin.wcRate;
-    w.loe = rand(...basin.loe);
-  } else if (w.status === 'Flowback') {
-    w.status = 'Producing'; w.daysInPhase = 0;
-  }
+function doWorkover(wid){
+  let w=G.wells.find(x=>x.id===wid);
+  if(!w||w.status!=='Producing')return;
+  let cost=rand(200000,700000);
+  if(G.cash<cost){alert('Insufficient funds!');return}
+  G.cash-=cost;G.tCapex+=cost;w.woCount++;
+  w.ipOil*=rand(1.1,1.4)/(1+w.woCount*0.1);
+  updateAll();closeDetail();
 }
 
-function acquireLease() {
-  if (!selectedBasin) return;
-  let basin = BASINS[selectedBasin];
-  let name = document.getElementById('wellNameInput').value || `Well #${G.wellCounter+1}`;
-  let acres = randInt(320, 1280);
-  let costPerAcre = rand(...basin.leaseCostPerAcre);
-  let leaseCost = acres * costPerAcre;
-  if (G.cash < leaseCost) { alert('Insufficient funds!'); return; }
+// ════════════════════════════════════════
+// MAP RENDERING — SATELLITE-STYLE BAKKEN
+// ════════════════════════════════════════
 
-  G.wellCounter++;
-  let well = {
-    id: 'W-' + String(G.wellCounter).padStart(3,'0'),
-    name, basinKey: selectedBasin, status: 'Lease Acquired', acres, leaseCost,
-    drillCost: rand(...basin.drillCost), completionCost: rand(...basin.completionCost),
-    facilityCost: rand(...basin.facilityCost),
-    ipOil:0, ipGas:0, bFactor:1.2, di:0.72, gor:1000, gorRate:0.15, wc:0.25, wcRate:0.08, loe:8,
-    oilRate:0, gasRate:0, waterRate:0,
-    cumOil:0, cumGas:0, cumWater:0, cumRevenue:0, cumOpex:0,
-    monthsOnline:0, daysInPhase:0, daysRequired:0,
-    liftType: 'Natural Flow', workoverCount: 0
-  };
+let canvas, ctx, mapW, mapH;
+let camX=0, camY=0, camZoom=1;
+let dragging=false, lastMX=0, lastMY=0;
+let animFrame=0;
 
-  G.cash -= leaseCost; G.totalCapex += leaseCost;
-  G.wells.push(well);
-  document.getElementById('wellNameInput').value = '';
-  toggleBasinPanel();
-  updateHUD();
-  addRigToScene(well);
-}
+// Bakken map bounds (approximate lat/lon for Williston Basin area)
+// We'll use a normalized coordinate system 0-1 for map space
+const MAP_TOWNS = [
+  {name:'Williston',x:0.22,y:0.35},{name:'Watford City',x:0.38,y:0.42},
+  {name:'Dickinson',x:0.35,y:0.72},{name:'Minot',x:0.55,y:0.18},
+  {name:'Stanley',x:0.42,y:0.22},{name:'Tioga',x:0.28,y:0.25},
+  {name:'New Town',x:0.48,y:0.32},{name:'Killdeer',x:0.42,y:0.55},
+  {name:'Alexander',x:0.28,y:0.45},{name:'Sidney, MT',x:0.12,y:0.42},
+];
 
-function startPermitting(wellId) {
-  let w = G.wells.find(x => x.id === wellId);
-  if (!w || w.status !== 'Lease Acquired') return;
-  let basin = BASINS[w.basinKey];
-  let estTotal = w.drillCost + w.completionCost + w.facilityCost;
-  if (G.cash < estTotal * 0.3) { alert('Insufficient funds for D&C!'); return; }
-  w.status = 'Permitting'; w.daysInPhase = 0; w.daysRequired = randInt(15, 45);
-  updateHUD();
-}
+// Township grid and terrain colors for satellite look
+function drawMap() {
+  canvas = document.getElementById('mapCanvas');
+  ctx = canvas.getContext('2d');
+  mapW = window.innerWidth;
+  mapH = window.innerHeight;
+  canvas.width = mapW;
+  canvas.height = mapH;
 
-function installLift(wellId, liftType) {
-  let w = G.wells.find(x => x.id === wellId);
-  if (!w || w.status !== 'Producing') return;
-  let costs = { 'Rod Pump': [80000,180000], 'ESP': [150000,350000], 'Gas Lift': [200000,400000], 'Plunger Lift': [30000,80000] };
-  let cost = rand(...costs[liftType]);
-  if (G.cash < cost) { alert('Insufficient funds!'); return; }
-  w.liftType = liftType; G.cash -= cost; G.totalCapex += cost;
-  w.ipOil *= 1.05;
-  updateHUD();
-}
-
-function doWorkover(wellId) {
-  let w = G.wells.find(x => x.id === wellId);
-  if (!w || w.status !== 'Producing') return;
-  let cost = rand(150000, 600000);
-  if (G.cash < cost) { alert('Insufficient funds!'); return; }
-  G.cash -= cost; G.totalCapex += cost;
-  w.workoverCount++;
-  w.ipOil *= rand(1.1, 1.4) / (1 + w.workoverCount * 0.1);
-  updateHUD();
-}
-
-// ════════════════════════════════════════════
-// THREE.JS 3D SCENE
-// ════════════════════════════════════════════
-
-let scene, camera, renderer, clock;
-let basinMeshes = {};
-let rigMeshes = [];
-let particles;
-
-function init3D() {
-  const canvas = document.getElementById('three-canvas');
-  scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0d1117, 0.08);
-
-  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 5, 6);
-  camera.lookAt(0, 0, 0);
-
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x0d1117);
-
-  clock = new THREE.Clock();
-
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0x334455, 0.6);
-  scene.add(ambientLight);
-
-  const dirLight = new THREE.DirectionalLight(0xffeedd, 0.8);
-  dirLight.position.set(5, 8, 5);
-  scene.add(dirLight);
-
-  const goldLight = new THREE.PointLight(0xd4a017, 0.5, 20);
-  goldLight.position.set(0, 3, 0);
-  scene.add(goldLight);
-
-  // Ground plane - US map representation
-  const groundGeo = new THREE.PlaneGeometry(8, 5, 40, 25);
-  const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x0a1628,
-    roughness: 0.9,
-    metalness: 0.1,
-    wireframe: false,
-  });
-
-  // Terrain deformation
-  const pos = groundGeo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    let x = pos.getX(i), y = pos.getY(i);
-    let height = Math.sin(x * 2) * 0.1 + Math.cos(y * 3) * 0.08 + Math.sin(x * y) * 0.05;
-    pos.setZ(i, height);
-  }
-  groundGeo.computeVertexNormals();
-
-  const ground = new THREE.Mesh(groundGeo, groundMat);
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.5;
-  scene.add(ground);
-
-  // Grid overlay
-  const gridGeo = new THREE.PlaneGeometry(8, 5, 20, 12);
-  const gridMat = new THREE.MeshBasicMaterial({ color: 0x1a3050, wireframe: true, transparent: true, opacity: 0.15 });
-  const grid = new THREE.Mesh(gridGeo, gridMat);
-  grid.rotation.x = -Math.PI / 2;
-  grid.position.y = -0.48;
-  scene.add(grid);
-
-  // Basin markers
-  Object.entries(BASINS).forEach(([key, basin]) => {
-    const markerGroup = new THREE.Group();
-
-    // Glowing circle on ground
-    const ringGeo = new THREE.RingGeometry(0.2, 0.28, 32);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xd4a017, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = -0.45;
-    markerGroup.add(ring);
-
-    // Inner filled circle
-    const innerGeo = new THREE.CircleGeometry(0.18, 32);
-    const innerMat = new THREE.MeshBasicMaterial({ color: 0xd4a017, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
-    const inner = new THREE.Mesh(innerGeo, innerMat);
-    inner.rotation.x = -Math.PI / 2;
-    inner.position.y = -0.44;
-    markerGroup.add(inner);
-
-    // Vertical beam
-    const beamGeo = new THREE.CylinderGeometry(0.01, 0.01, 1.5, 8);
-    const beamMat = new THREE.MeshBasicMaterial({ color: 0xd4a017, transparent: true, opacity: 0.3 });
-    const beam = new THREE.Mesh(beamGeo, beamMat);
-    beam.position.y = 0.3;
-    markerGroup.add(beam);
-
-    // Marker sphere at top
-    const sphereGeo = new THREE.SphereGeometry(0.06, 16, 16);
-    const sphereMat = new THREE.MeshStandardMaterial({ color: 0xd4a017, emissive: 0xd4a017, emissiveIntensity: 0.5 });
-    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere.position.y = 1.1;
-    markerGroup.add(sphere);
-
-    markerGroup.position.set(basin.mapPos.x, 0, basin.mapPos.z);
-    markerGroup.userData = { basinKey: key };
-    scene.add(markerGroup);
-    basinMeshes[key] = markerGroup;
-  });
-
-  // Particles (dust / atmosphere)
-  const pCount = 500;
-  const pGeo = new THREE.BufferGeometry();
-  const pPositions = new Float32Array(pCount * 3);
-  for (let i = 0; i < pCount; i++) {
-    pPositions[i*3] = (Math.random() - 0.5) * 10;
-    pPositions[i*3+1] = Math.random() * 3;
-    pPositions[i*3+2] = (Math.random() - 0.5) * 8;
-  }
-  pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
-  const pMat = new THREE.PointsMaterial({ color: 0xd4a017, size: 0.015, transparent: true, opacity: 0.4 });
-  particles = new THREE.Points(pGeo, pMat);
-  scene.add(particles);
-
-  // Raycaster for clicks
-  const raycaster = new THREE.Raycaster();
-  const mouse = new THREE.Vector2();
-
-  canvas.addEventListener('click', (e) => {
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const meshes = Object.values(basinMeshes).flatMap(g => g.children);
-    const intersects = raycaster.intersectObjects(meshes);
-    if (intersects.length > 0) {
-      let parent = intersects[0].object.parent;
-      if (parent.userData.basinKey) {
-        selectedBasin = parent.userData.basinKey;
-        renderBasinOptions();
-        let panel = document.getElementById('basinPanel');
-        if (!panel.classList.contains('open')) toggleBasinPanel();
-      }
+  // Input handlers
+  canvas.addEventListener('mousedown',e=>{dragging=true;lastMX=e.clientX;lastMY=e.clientY});
+  canvas.addEventListener('mousemove',e=>{if(dragging){camX+=(e.clientX-lastMX)/camZoom;camY+=(e.clientY-lastMY)/camZoom;lastMX=e.clientX;lastMY=e.clientY}});
+  canvas.addEventListener('mouseup',()=>dragging=false);
+  canvas.addEventListener('mouseleave',()=>dragging=false);
+  canvas.addEventListener('wheel',e=>{
+    let z=camZoom;
+    camZoom=Math.max(0.5,Math.min(5,camZoom*(e.deltaY>0?0.9:1.1)));
+    // Zoom toward mouse
+    let mx=(e.clientX-mapW/2)/z, my=(e.clientY-mapH/2)/z;
+    camX+= mx*(1-z/camZoom); camY+= my*(1-z/camZoom);
+    e.preventDefault();
+  },{passive:false});
+  
+  canvas.addEventListener('dblclick',e=>{
+    // Double-click to place pad
+    let wx=(e.clientX-mapW/2)/camZoom-camX;
+    let wy=(e.clientY-mapH/2)/camZoom-camY;
+    // Convert to map coords (0-1)
+    let mx=wx/mapW+0.5, my=wy/mapH+0.5;
+    if(mx>0&&mx<1&&my>0&&my<1){
+      pendingPadX=mx; pendingPadY=my;
+      openAcquire();
     }
   });
 
-  // Mouse move for camera
-  let mouseX = 0, mouseY = 0;
-  document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-  });
+  window.addEventListener('resize',()=>{mapW=window.innerWidth;mapH=window.innerHeight;canvas.width=mapW;canvas.height=mapH});
 
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+  // Generate terrain
+  generateTerrain();
+  renderLoop();
+}
 
-  // Animation loop
-  function animate() {
-    requestAnimationFrame(animate);
-    const t = clock.getElapsedTime();
-
-    // Gentle camera sway
-    camera.position.x = 0 + mouseX * 0.5;
-    camera.position.z = 6 - mouseY * 0.3;
-    camera.lookAt(0, 0, 0);
-
-    // Animate basin markers
-    Object.values(basinMeshes).forEach(group => {
-      group.children.forEach((child, i) => {
-        if (i === 3) { // sphere
-          child.position.y = 1.1 + Math.sin(t * 2 + group.position.x * 3) * 0.05;
-        }
-      });
-    });
-
-    // Animate rigs
-    rigMeshes.forEach(rig => {
-      if (rig.userData.well) {
-        let w = rig.userData.well;
-        if (w.status === 'Drilling') {
-          // Pumping animation for drilling
-          rig.children.forEach(child => {
-            if (child.userData && child.userData.isDrillHead) {
-              child.position.y = 0.3 + Math.sin(t * 4) * 0.1;
-            }
-          });
-        } else if (w.status === 'Producing') {
-          // Pumpjack animation
-          rig.children.forEach(child => {
-            if (child.userData && child.userData.isPumpHead) {
-              child.rotation.z = Math.sin(t * 1.5) * 0.3;
-            }
-          });
-        }
-      }
-    });
-
-    // Particles drift
-    const pPos = particles.geometry.attributes.position;
-    for (let i = 0; i < pPos.count; i++) {
-      let y = pPos.getY(i);
-      y += 0.003;
-      if (y > 3) y = 0;
-      pPos.setY(i, y);
-      pPos.setX(i, pPos.getX(i) + Math.sin(t + i) * 0.0005);
+let terrainData=[];
+function generateTerrain(){
+  // Create a grid of terrain colors for satellite look
+  let cols=120, rows=80;
+  terrainData=[];
+  for(let r=0;r<rows;r++){
+    let row=[];
+    for(let c=0;c<cols;c++){
+      let nx=c/cols, ny=r/rows;
+      // Perlin-ish noise for terrain variety
+      let n1=Math.sin(nx*12+ny*8)*0.5+Math.cos(ny*15-nx*6)*0.3+Math.sin((nx+ny)*20)*0.2;
+      let n2=Math.sin(nx*30)*0.15+Math.cos(ny*25)*0.15;
+      let n=n1+n2;
+      
+      // Color based on terrain type
+      let terrain;
+      if(n>0.6) terrain={r:85+n2*40,g:95+n2*30,b:60+n2*20}; // Grassland
+      else if(n>0.2) terrain={r:110+n1*25,g:105+n1*20,b:75+n1*15}; // Prairie
+      else if(n>-0.2) terrain={r:130+n2*30,g:120+n2*25,b:85+n2*20}; // Scrubland
+      else if(n>-0.5) terrain={r:95+n1*20,g:100+n1*25,b:65+n1*15}; // Coulees
+      else terrain={r:70+n2*15,g:80+n2*20,b:55+n2*10}; // Badlands
+      
+      // Add some brown/tan for North Dakota feel
+      terrain.r=Math.floor(terrain.r*0.85+40);
+      terrain.g=Math.floor(terrain.g*0.8+35);
+      terrain.b=Math.floor(terrain.b*0.6+20);
+      row.push(terrain);
     }
-    pPos.needsUpdate = true;
+    terrainData.push(row);
+  }
+}
 
-    renderer.render(scene, camera);
+function toScreen(mx,my){
+  let sx=(mx-0.5)*mapW+camX*camZoom+mapW/2;
+  let sy=(my-0.5)*mapH+camY*camZoom+mapH/2;
+  sx=mapW/2+(sx-mapW/2)*camZoom;
+  sy=mapH/2+(sy-mapH/2)*camZoom;
+  return{x:sx,y:sy};
+}
+
+function renderLoop(){
+  animFrame++;
+  ctx.clearRect(0,0,mapW,mapH);
+  
+  // Background
+  ctx.fillStyle='#1a1e12';
+  ctx.fillRect(0,0,mapW,mapH);
+
+  // Draw terrain tiles
+  let cols=terrainData[0]?.length||1, rows=terrainData.length||1;
+  let tileW=mapW/cols*camZoom, tileH=mapH/rows*camZoom;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      let p=toScreen(c/cols,r/rows);
+      if(p.x>mapW+tileW||p.x<-tileW||p.y>mapH+tileH||p.y<-tileH) continue;
+      let t=terrainData[r][c];
+      ctx.fillStyle=`rgb(${t.r},${t.g},${t.b})`;
+      ctx.fillRect(p.x,p.y,tileW+1,tileH+1);
+    }
   }
 
-  animate();
-}
-
-function addRigToScene(well) {
-  let basin = BASINS[well.basinKey];
-  let rigGroup = new THREE.Group();
-
-  // Derrick / rig tower
-  const towerGeo = new THREE.CylinderGeometry(0.02, 0.05, 0.8, 4);
-  const towerMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7, roughness: 0.3 });
-  const tower = new THREE.Mesh(towerGeo, towerMat);
-  tower.position.y = 0;
-  rigGroup.add(tower);
-
-  // Drill head
-  const headGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.08, 8);
-  const headMat = new THREE.MeshStandardMaterial({ color: 0xd4a017, emissive: 0xd4a017, emissiveIntensity: 0.3 });
-  const head = new THREE.Mesh(headGeo, headMat);
-  head.position.y = 0.3;
-  head.userData = { isDrillHead: true, isPumpHead: true };
-  rigGroup.add(head);
-
-  // Base platform
-  const baseGeo = new THREE.BoxGeometry(0.15, 0.03, 0.15);
-  const baseMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
-  const base = new THREE.Mesh(baseGeo, baseMat);
-  base.position.y = -0.4;
-  rigGroup.add(base);
-
-  // Light on top
-  const light = new THREE.PointLight(0xd4a017, 0.3, 2);
-  light.position.y = 0.5;
-  rigGroup.add(light);
-
-  // Position near basin with offset
-  let offset = rigMeshes.filter(r => r.userData.well && r.userData.well.basinKey === well.basinKey).length;
-  rigGroup.position.set(
-    basin.mapPos.x + (offset % 3) * 0.25 - 0.25,
-    0,
-    basin.mapPos.z + Math.floor(offset / 3) * 0.25 + 0.3
-  );
-
-  rigGroup.userData = { well };
-  scene.add(rigGroup);
-  rigMeshes.push(rigGroup);
-}
-
-function update3DScene() {
-  rigMeshes.forEach(rig => {
-    let w = rig.userData.well;
-    if (!w) return;
-    // Update rig appearance based on status
-    let color = w.status === 'Producing' ? 0x27ae60 : 
-                w.status === 'Drilling' ? 0x2d9cdb :
-                w.status === 'Completing' ? 0xf4a523 : 0x888888;
-    rig.children[0].material.color.setHex(color);
-    
-    // Scale producing wells based on production
-    if (w.status === 'Producing') {
-      let scale = 0.8 + (w.oilRate / 2000) * 0.8;
-      rig.scale.setScalar(Math.min(scale, 2));
-    }
-  });
-}
-
-// ════════════════════════════════════════════
-// MENU 3D BACKGROUND
-// ════════════════════════════════════════════
-
-function initMenuBG() {
-  const canvas = document.getElementById('menuCanvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  let particles = [];
-  for (let i = 0; i < 60; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 2 + 0.5,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      alpha: Math.random() * 0.3 + 0.1,
-    });
+  // Township grid
+  ctx.strokeStyle='rgba(200,180,140,0.08)';
+  ctx.lineWidth=0.5;
+  for(let i=0;i<=20;i++){
+    let p1=toScreen(i/20,0), p2=toScreen(i/20,1);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+    p1=toScreen(0,i/20); p2=toScreen(1,i/20);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
   }
 
-  function drawMenu() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw connecting lines
-    particles.forEach((p, i) => {
-      particles.forEach((q, j) => {
-        if (j <= i) return;
-        let dx = p.x - q.x, dy = p.y - q.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < 200) {
-          ctx.beginPath();
-          ctx.strokeStyle = `rgba(212,160,23,${0.05 * (1 - dist/200)})`;
-          ctx.lineWidth = 0.5;
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(q.x, q.y);
-          ctx.stroke();
-        }
-      });
-
-      // Draw particles
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(212,160,23,${p.alpha})`;
-      ctx.fill();
-
-      // Move
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-    });
-
-    if (document.getElementById('mainMenu').classList.contains('active')) {
-      requestAnimationFrame(drawMenu);
-    }
-  }
-  drawMenu();
-}
-
-// ════════════════════════════════════════════
-// UI FUNCTIONS
-// ════════════════════════════════════════════
-
-let selectedBasin = null;
-
-function startGame() {
-  document.getElementById('mainMenu').classList.remove('active');
-  document.getElementById('gameScreen').classList.add('active');
-  init3D();
-  renderBasinOptions();
-  updateHUD();
-}
-
-function showHow() {
-  document.getElementById('mainMenu').classList.remove('active');
-  document.getElementById('howScreen').classList.add('active');
-}
-
-function hideHow() {
-  document.getElementById('howScreen').classList.remove('active');
-  document.getElementById('mainMenu').classList.add('active');
-}
-
-function toggleBasinPanel() {
-  document.getElementById('basinPanel').classList.toggle('open');
-}
-
-function switchTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  event.target.classList.add('active');
-}
-
-function renderBasinOptions() {
-  let html = '';
-  Object.entries(BASINS).forEach(([key, b]) => {
-    let sel = key === selectedBasin ? 'selected' : '';
-    let dcMin = ((b.drillCost[0]+b.completionCost[0])/1e6).toFixed(1);
-    let dcMax = ((b.drillCost[1]+b.completionCost[1])/1e6).toFixed(1);
-    html += `
-      <div class="basin-option ${sel}" onclick="selectBasin('${key}')">
-        <div class="basin-name">${b.emoji} ${b.name}</div>
-        <div class="basin-desc">${b.desc}</div>
-        <div class="basin-stats">
-          <div class="basin-stat">IP Oil: <span>${b.ipOil[0].toLocaleString()}-${b.ipOil[1].toLocaleString()} bbl/d</span></div>
-          <div class="basin-stat">IP Gas: <span>${b.ipGas[0].toLocaleString()}-${b.ipGas[1].toLocaleString()} mcf/d</span></div>
-          <div class="basin-stat">D&C: <span>$${dcMin}-${dcMax}M</span></div>
-          <div class="basin-stat">Lease: <span>$${(b.leaseCostPerAcre[0]/1000).toFixed(0)}-${(b.leaseCostPerAcre[1]/1000).toFixed(0)}K/ac</span></div>
-        </div>
-      </div>`;
-  });
-  document.getElementById('basinOptions').innerHTML = html;
-  updateLeaseEstimate();
-}
-
-function selectBasin(key) {
-  selectedBasin = key;
-  renderBasinOptions();
-}
-
-function updateLeaseEstimate() {
-  if (!selectedBasin) { document.getElementById('leaseEstimate').innerHTML = ''; return; }
-  let b = BASINS[selectedBasin];
-  let avgLease = ((b.leaseCostPerAcre[0]+b.leaseCostPerAcre[1])/2 * 800);
-  let avgDC = (b.drillCost[0]+b.drillCost[1]+b.completionCost[0]+b.completionCost[1]+b.facilityCost[0]+b.facilityCost[1])/2;
-  document.getElementById('leaseEstimate').innerHTML = `
-    EST. LEASE: ${fmtCurrency(avgLease)} | EST. D&C: ${fmtCurrency(avgDC)}<br>
-    TOTAL BUDGET: ${fmtCurrency(avgLease + avgDC)}
-  `;
-}
-
-function updateHUD() {
-  document.getElementById('hudDate').textContent = getMonthName() + ' ' + G.year;
-  document.getElementById('hudCash').textContent = fmtCurrency(G.cash, true);
-  document.getElementById('hudWTI').textContent = '$' + G.wtiPrice.toFixed(2);
-  document.getElementById('hudGas').textContent = '$' + G.gasPrice.toFixed(2);
-
-  let totalOil = G.wells.reduce((s,w) => s + (w.status==='Producing' ? w.oilRate : 0), 0);
-  let totalGas = G.wells.reduce((s,w) => s + (w.status==='Producing' ? w.gasRate : 0), 0);
-  document.getElementById('hudOilRate').textContent = totalOil.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  document.getElementById('hudGasRate').textContent = totalGas.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-  // Portfolio value
-  let pv = G.cash;
-  G.wells.forEach(w => {
-    if (w.status === 'Producing') {
-      let monthlyRev = w.oilRate * 30.4 * G.wtiPrice + w.gasRate * 30.4 * G.gasPrice;
-      pv += monthlyRev * 18;
-    }
-  });
-  document.getElementById('hudPortfolio').textContent = fmtCurrency(pv, true);
-
-  // Wells tab
-  updateWellList();
-  updateProductionTab();
-  updateOperationsTab();
-  updateEventsTab();
-}
-
-function statusClass(status) {
-  return status === 'Producing' ? 'producing' : status === 'Drilling' ? 'drilling' :
-         status === 'Completing' ? 'completing' : status === 'Permitting' ? 'permitting' :
-         status === 'Flowback' ? 'flowback' : 'lease';
-}
-
-function updateWellList() {
-  let el = document.getElementById('wellList');
-  if (G.wells.length === 0) {
-    el.innerHTML = '<div style="color:var(--steel); font-size:0.85rem; padding:20px; text-align:center; width:100%;">No wells yet. Click <strong style="color:var(--drill-green);">+ BUY LEASE</strong> to get started.</div>';
-    return;
+  // Section roads (more visible grid)
+  ctx.strokeStyle='rgba(180,160,120,0.12)';
+  ctx.lineWidth=1;
+  for(let i=0;i<=10;i++){
+    let p1=toScreen(i/10,0), p2=toScreen(i/10,1);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+    p1=toScreen(0,i/10); p2=toScreen(1,i/10);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
   }
 
-  el.innerHTML = G.wells.map(w => {
-    let statusCls = statusClass(w.status);
-    let progress = '';
-    if (['Permitting','Drilling','Completing','Flowback'].includes(w.status)) {
-      let pct = Math.min((w.daysInPhase / Math.max(w.daysRequired,1)) * 100, 100);
-      progress = `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
-    }
-
-    let stats = '';
-    if (w.status === 'Producing') {
-      stats = `
-        <div class="well-stat-label">Oil Rate</div><div class="well-stat-value" style="color:var(--crude-gold);">${w.oilRate.toFixed(0)} bbl/d</div>
-        <div class="well-stat-label">Gas Rate</div><div class="well-stat-value" style="color:var(--gas-blue);">${w.gasRate.toFixed(0)} mcf/d</div>
-        <div class="well-stat-label">Cum Oil</div><div class="well-stat-value">${(w.cumOil/1000).toFixed(0)}K bbl</div>
-        <div class="well-stat-label">Net Rev</div><div class="well-stat-value" style="color:${w.cumRevenue-w.cumOpex>0?'var(--drill-green)':'var(--danger-red)'};">${fmtCurrency(w.cumRevenue - w.cumOpex, true)}</div>
-      `;
-    } else if (w.status === 'Lease Acquired') {
-      stats = `
-        <div class="well-stat-label">Lease</div><div class="well-stat-value">${fmtCurrency(w.leaseCost, true)}</div>
-        <div class="well-stat-label">Est D&C</div><div class="well-stat-value">${fmtCurrency(w.drillCost+w.completionCost+w.facilityCost, true)}</div>
-      `;
-    } else {
-      stats = `
-        <div class="well-stat-label">Phase</div><div class="well-stat-value">${w.daysInPhase}/${w.daysRequired}d</div>
-        <div class="well-stat-label">Basin</div><div class="well-stat-value">${BASINS[w.basinKey].emoji}</div>
-      `;
-    }
-
-    return `
-      <div class="well-card ${statusCls}">
-        <div class="well-card-header">
-          <div class="well-card-name">${w.name}</div>
-          <div class="well-card-status status-${statusCls}">${w.status.toUpperCase()}</div>
-        </div>
-        <div class="well-card-stats">${stats}</div>
-        ${progress}
-        ${w.status === 'Lease Acquired' ? `<button class="ops-btn" style="width:100%;margin-top:8px;" onclick="startPermitting('${w.id}')">⛏️ START PERMITTING</button>` : ''}
-      </div>`;
-  }).join('');
-}
-
-function updateProductionTab() {
-  let el = document.getElementById('productionGauges');
-  if (G.history.length === 0) {
-    el.innerHTML = '<div style="color:var(--steel); font-size:0.85rem;">Advance the game to see production data.</div>';
-    return;
-  }
-
-  let latest = G.history[G.history.length - 1];
-  let producing = G.wells.filter(w => w.status === 'Producing').length;
-
-  el.innerHTML = `
-    <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; width:100%;">
-      <div style="display:flex; gap:16px; flex-wrap:wrap;">
-        ${makeGauge('MONTHLY OIL', (latest.oil/1000).toFixed(0)+'K', 'bbl', 'var(--crude-gold)')}
-        ${makeGauge('MONTHLY GAS', (latest.gas/1000).toFixed(0)+'K', 'mcf', 'var(--gas-blue)')}
-        ${makeGauge('REVENUE', fmtCurrency(latest.rev, true), '/mo', 'var(--drill-green)')}
-        ${makeGauge('OPEX', fmtCurrency(latest.opex, true), '/mo', 'var(--danger-red)')}
-        ${makeGauge('WELLS', producing, 'active', 'var(--crude-gold)')}
-        ${makeGauge('WTI', '$'+G.wtiPrice.toFixed(0), '/bbl', 'var(--crude-gold)')}
-        ${makeGauge('GAS', '$'+G.gasPrice.toFixed(2), '/mcf', 'var(--gas-blue)')}
-        ${makeGauge('CAPEX', fmtCurrency(G.totalCapex, true), 'total', 'var(--steel)')}
-      </div>
-      <div style="flex:1; min-width:300px;">
-        <canvas id="historyChart" width="500" height="90"></canvas>
-      </div>
-    </div>
-  `;
-
-  drawHistoryChart();
-}
-
-function makeGauge(label, value, unit, color) {
-  return `
-    <div class="gauge">
-      <div class="gauge-ring" style="border: 3px solid ${color}33; box-shadow: inset 0 0 10px ${color}22;">
-        <div class="gauge-value" style="color:${color};">${value}</div>
-      </div>
-      <div class="gauge-label">${label}</div>
-    </div>
-  `;
-}
-
-function drawHistoryChart() {
-  let canvas = document.getElementById('historyChart');
-  if (!canvas) return;
-  let ctx = canvas.getContext('2d');
-  let w = canvas.width, h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
-
-  if (G.history.length < 2) return;
-
-  let data = G.history.slice(-36); // Last 36 months
-  let maxCash = Math.max(...data.map(d => d.cash));
-  let minCash = Math.min(...data.map(d => d.cash));
-  let range = maxCash - minCash || 1;
-
-  // Cash line
+  // Missouri River (rough path)
+  ctx.strokeStyle='rgba(45,100,160,0.35)';
+  ctx.lineWidth=3*camZoom;
   ctx.beginPath();
-  ctx.strokeStyle = '#d4a017';
-  ctx.lineWidth = 2;
-  data.forEach((d, i) => {
-    let x = (i / (data.length - 1)) * w;
-    let y = h - ((d.cash - minCash) / range) * (h - 10) - 5;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
+  ctx.moveTo(...Object.values(toScreen(0.05,0.35)));
+  ctx.quadraticCurveTo(...Object.values(toScreen(0.25,0.30)),...Object.values(toScreen(0.40,0.35)));
+  ctx.quadraticCurveTo(...Object.values(toScreen(0.52,0.38)),...Object.values(toScreen(0.55,0.45)));
+  ctx.quadraticCurveTo(...Object.values(toScreen(0.58,0.55)),...Object.values(toScreen(0.65,0.65)));
   ctx.stroke();
-
-  // Fill
-  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
-  ctx.fillStyle = 'rgba(212,160,23,0.08)';
+  // Lake Sakakawea
+  ctx.fillStyle='rgba(35,80,130,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(...Object.values(toScreen(0.46,0.34)),40*camZoom,15*camZoom,0.3,0,Math.PI*2);
   ctx.fill();
 
-  // Revenue bars
-  let maxRev = Math.max(...data.map(d => d.rev)) || 1;
-  data.forEach((d, i) => {
-    let x = (i / (data.length - 1)) * w;
-    let barH = (d.rev / maxRev) * 30;
-    ctx.fillStyle = 'rgba(39,174,96,0.3)';
-    ctx.fillRect(x - 2, h - barH, 4, barH);
+  // Towns
+  ctx.font=`${Math.max(9,11*camZoom)}px 'Share Tech Mono',monospace`;
+  ctx.textAlign='center';
+  MAP_TOWNS.forEach(t=>{
+    let p=toScreen(t.x,t.y);
+    ctx.fillStyle='rgba(200,180,140,0.5)';
+    ctx.beginPath();ctx.arc(p.x,p.y,2*camZoom,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(200,180,140,0.4)';
+    ctx.fillText(t.name,p.x,p.y-8*camZoom);
   });
+
+  // Draw pads, wells, facilities, rigs, pumpjacks
+  G.pads.forEach(pad=>{
+    let pp=toScreen(pad.mapX,pad.mapY);
+    
+    // Pad area (graded lease block)
+    let padSize=30*camZoom;
+    ctx.strokeStyle='rgba(212,160,23,0.2)';
+    ctx.lineWidth=1;
+    ctx.strokeRect(pp.x-padSize,pp.y-padSize*0.6,padSize*2,padSize*1.5);
+    
+    // Facility
+    drawFacility(pp.x+padSize*0.8,pp.y-padSize*0.3,camZoom);
+    
+    // Access road
+    ctx.strokeStyle='rgba(180,160,120,0.25)';
+    ctx.lineWidth=2*camZoom;
+    ctx.beginPath();
+    ctx.moveTo(pp.x-padSize,pp.y);
+    ctx.lineTo(pp.x-padSize-40*camZoom,pp.y);
+    ctx.stroke();
+
+    // Pad label
+    if(camZoom>0.8){
+      ctx.font=`bold ${Math.max(8,10*camZoom)}px 'Chakra Petch',sans-serif`;
+      ctx.fillStyle='rgba(212,160,23,0.6)';
+      ctx.textAlign='left';
+      ctx.fillText(pad.name,pp.x-padSize,pp.y-padSize*0.6-4*camZoom);
+    }
+  });
+
+  // Draw each well
+  G.wells.forEach(w=>{
+    let p=toScreen(w.mX,w.mY);
+    let sz=camZoom;
+    
+    if(w.status==='Producing'){
+      drawPumpjack(p.x,p.y,sz,w,animFrame);
+    } else if(w.status==='Drilling'){
+      drawDrillingRig(p.x,p.y,sz,w,animFrame);
+    } else if(w.status==='Completing'){
+      drawFracSpread(p.x,p.y,sz,animFrame);
+    } else if(w.status==='Flowback'){
+      drawFlowbackEquip(p.x,p.y,sz,animFrame);
+    } else if(w.status==='Permitting'){
+      drawStake(p.x,p.y,sz);
+    } else {
+      drawLeaseMarker(p.x,p.y,sz);
+    }
+
+    // Event indicator
+    if(w.hasEvent || G.aEvts.some(e=>e.wid===w.id)){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y-20*sz,4*sz,0,Math.PI*2);
+      ctx.fillStyle=`rgba(231,76,60,${0.5+0.5*Math.sin(animFrame*0.1)})`;
+      ctx.fill();
+    }
+
+    // Well label (when zoomed in)
+    if(camZoom>1.2){
+      ctx.font=`${Math.max(7,8*sz)}px 'Share Tech Mono',monospace`;
+      ctx.textAlign='center';
+      ctx.fillStyle='rgba(236,240,241,0.5)';
+      ctx.fillText(w.name,p.x,p.y+22*sz);
+      if(w.status==='Producing'){
+        ctx.fillStyle='rgba(39,174,96,0.5)';
+        ctx.fillText(fmtN(w.oilRate,0)+' bbl/d',p.x,p.y+30*sz);
+      }
+    }
+  });
+
+  // Williston Basin label
+  ctx.save();
+  ctx.font=`${Math.max(12,20*camZoom)}px 'Teko',sans-serif`;
+  ctx.fillStyle='rgba(212,160,23,0.06)';
+  ctx.textAlign='center';
+  let cp=toScreen(0.4,0.5);
+  ctx.fillText('WILLISTON BASIN',cp.x,cp.y);
+  ctx.restore();
+
+  requestAnimationFrame(renderLoop);
 }
 
-function updateOperationsTab() {
-  let el = document.getElementById('operationsContent');
-  let activeWells = G.wells.filter(w => w.status === 'Producing');
-  if (activeWells.length === 0) {
-    el.innerHTML = '<div style="color:var(--steel); font-size:0.85rem;">No producing wells. Drill some first!</div>';
-    return;
+// ═══ DRAWING FUNCTIONS ═══
+
+function drawPumpjack(x,y,z,well,frame){
+  let speed = well.liftType==='Rod Pump' ? 1.5 : 
+              well.liftType==='ESP' ? 0 : 
+              well.liftType==='Gas Lift' ? 0 : 1.2;
+  let angle = speed > 0 ? Math.sin(frame*0.04*speed)*0.4 : 0;
+  let sc=z*1.2;
+  
+  // Base/foundation
+  ctx.fillStyle='#555';
+  ctx.fillRect(x-8*sc,y+2*sc,16*sc,3*sc);
+  
+  // Samson post (vertical support)
+  ctx.strokeStyle='#888';
+  ctx.lineWidth=2.5*sc;
+  ctx.beginPath();
+  ctx.moveTo(x,y+4*sc);
+  ctx.lineTo(x,y-12*sc);
+  ctx.stroke();
+  
+  // Walking beam (the rocking arm)
+  ctx.save();
+  ctx.translate(x,y-12*sc);
+  ctx.rotate(angle);
+  ctx.strokeStyle='#aaa';
+  ctx.lineWidth=2*sc;
+  ctx.beginPath();
+  ctx.moveTo(-14*sc,0);
+  ctx.lineTo(14*sc,0);
+  ctx.stroke();
+  
+  // Horse head (front end)
+  ctx.beginPath();
+  ctx.arc(-14*sc,0,3*sc,0,Math.PI*2);
+  ctx.fillStyle='#999';
+  ctx.fill();
+  ctx.strokeStyle='#777';
+  ctx.lineWidth=1*sc;
+  ctx.stroke();
+  
+  // Counterweight (back end)
+  ctx.fillStyle='#666';
+  ctx.fillRect(10*sc,-3*sc,6*sc,6*sc);
+  
+  // Polished rod (hanging line)
+  ctx.strokeStyle='rgba(200,200,200,0.6)';
+  ctx.lineWidth=1*sc;
+  ctx.beginPath();
+  ctx.moveTo(-14*sc,3*sc);
+  ctx.lineTo(-14*sc,16*sc+Math.sin(angle)*4*sc);
+  ctx.stroke();
+  
+  ctx.restore();
+  
+  // Crank arm and gear at base
+  ctx.save();
+  ctx.translate(x+4*sc,y+1*sc);
+  ctx.rotate(frame*0.04*speed);
+  ctx.strokeStyle='#777';
+  ctx.lineWidth=1.5*sc;
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(4*sc,0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0,0,2*sc,0,Math.PI*2);
+  ctx.strokeStyle='#888';
+  ctx.stroke();
+  ctx.restore();
+  
+  // Wellhead
+  ctx.fillStyle='#d4a017';
+  ctx.fillRect(x-2*sc,y+1*sc,4*sc,2*sc);
+  
+  // Status light
+  let producing = well.oilRate > 0;
+  ctx.beginPath();
+  ctx.arc(x,y-16*sc,2*sc,0,Math.PI*2);
+  ctx.fillStyle=producing?`rgba(39,174,96,${0.6+0.4*Math.sin(frame*0.08)})`:'rgba(231,76,60,0.6)';
+  ctx.fill();
+
+  // If ESP - show electrical box
+  if(well.liftType==='ESP'){
+    ctx.fillStyle='#2d9cdb';
+    ctx.fillRect(x+10*sc,y-4*sc,6*sc,8*sc);
+    ctx.strokeStyle='rgba(45,156,219,0.5)';
+    ctx.lineWidth=0.5*sc;
+    ctx.strokeRect(x+10*sc,y-4*sc,6*sc,8*sc);
+    // Lightning bolt indicator
+    if(frame%20<10){
+      ctx.fillStyle='rgba(45,156,219,0.8)';
+      ctx.font=`${6*sc}px sans-serif`;
+      ctx.fillText('⚡',x+11*sc,y+2*sc);
+    }
+  }
+  
+  // If Gas Lift - show compressor
+  if(well.liftType==='Gas Lift'){
+    ctx.fillStyle='#444';
+    ctx.fillRect(x+10*sc,y-2*sc,8*sc,6*sc);
+    ctx.strokeStyle='rgba(200,200,200,0.3)';
+    ctx.lineWidth=0.5*sc;
+    ctx.strokeRect(x+10*sc,y-2*sc,8*sc,6*sc);
+    // Gas line
+    ctx.strokeStyle='rgba(200,200,200,0.2)';
+    ctx.setLineDash([2*sc,2*sc]);
+    ctx.beginPath();
+    ctx.moveTo(x+14*sc,y+4*sc);
+    ctx.lineTo(x+14*sc,y+10*sc);
+    ctx.lineTo(x,y+10*sc);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
-  el.innerHTML = activeWells.map(w => {
-    let df = declineRate(w, w.monthsOnline);
-    let needsLift = w.liftType === 'Natural Flow' && df < 0.35;
-    return `
-      <div style="display:flex; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid rgba(127,140,141,0.1);">
-        <div style="min-width:140px;">
-          <div style="font-family:'Teko',sans-serif; font-size:1rem; color:var(--text);">${w.name}</div>
-          <div style="font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--steel);">
-            ${w.oilRate.toFixed(0)} bbl/d | Decline: ${(df*100).toFixed(0)}% | ${w.liftType}
-          </div>
-        </div>
-        <div class="ops-grid">
-          ${needsLift ? `
-            <button class="ops-btn" onclick="installLift('${w.id}','Rod Pump')">Rod Pump</button>
-            <button class="ops-btn" onclick="installLift('${w.id}','ESP')">ESP</button>
-            <button class="ops-btn" onclick="installLift('${w.id}','Gas Lift')">Gas Lift</button>
-            <button class="ops-btn" onclick="installLift('${w.id}','Plunger Lift')">Plunger</button>
-          ` : ''}
-          ${w.monthsOnline > 6 ? `<button class="ops-btn" onclick="doWorkover('${w.id}')">🔧 Workover</button>` : ''}
-        </div>
-      </div>`;
-  }).join('');
+  // Flowline from wellhead
+  ctx.strokeStyle='rgba(212,160,23,0.15)';
+  ctx.lineWidth=1.5*sc;
+  ctx.beginPath();
+  ctx.moveTo(x+2*sc,y+2*sc);
+  ctx.lineTo(x+25*sc,y+2*sc);
+  ctx.stroke();
 }
 
-function updateEventsTab() {
-  let el = document.getElementById('eventLog');
-  if (G.eventLog.length === 0) {
-    el.innerHTML = '<div style="color:var(--steel); font-size:0.85rem;">No events yet.</div>';
-    return;
+function drawDrillingRig(x,y,z,well,frame){
+  let sc=z*1.3;
+  let drillBounce=Math.sin(frame*0.12)*2*sc;
+  
+  // Rig mast (tall derrick)
+  ctx.strokeStyle='#999';
+  ctx.lineWidth=1.5*sc;
+  // Left leg
+  ctx.beginPath();ctx.moveTo(x-8*sc,y+5*sc);ctx.lineTo(x-3*sc,y-30*sc);ctx.stroke();
+  // Right leg
+  ctx.beginPath();ctx.moveTo(x+8*sc,y+5*sc);ctx.lineTo(x+3*sc,y-30*sc);ctx.stroke();
+  // Cross braces
+  for(let i=0;i<5;i++){
+    let t=i/5;
+    let lx=x-8*sc+(5*sc*t), rx=x+8*sc-(5*sc*t);
+    let yy=y+5*sc-35*sc*t;
+    ctx.beginPath();ctx.moveTo(lx,yy);ctx.lineTo(rx,yy);ctx.stroke();
+  }
+  // Crown block
+  ctx.fillStyle='#888';
+  ctx.fillRect(x-4*sc,y-32*sc,8*sc,3*sc);
+  
+  // Drill string (moving up/down)
+  ctx.strokeStyle='rgba(200,200,200,0.5)';
+  ctx.lineWidth=1.5*sc;
+  ctx.beginPath();
+  ctx.moveTo(x,y-29*sc);
+  ctx.lineTo(x,y+5*sc+drillBounce);
+  ctx.stroke();
+  
+  // Traveling block
+  ctx.fillStyle='#aaa';
+  ctx.fillRect(x-3*sc,y-20*sc+drillBounce,6*sc,4*sc);
+  
+  // Substructure/floor
+  ctx.fillStyle='#666';
+  ctx.fillRect(x-12*sc,y+3*sc,24*sc,4*sc);
+  
+  // Mud tanks
+  ctx.fillStyle='#444';
+  ctx.fillRect(x+14*sc,y-2*sc,10*sc,8*sc);
+  ctx.fillRect(x+14*sc,y+2*sc,10*sc,4*sc);
+  ctx.strokeStyle='rgba(200,200,200,0.2)';
+  ctx.strokeRect(x+14*sc,y-2*sc,10*sc,8*sc);
+  
+  // Generator
+  ctx.fillStyle='#555';
+  ctx.fillRect(x-20*sc,y+1*sc,6*sc,5*sc);
+  
+  // Rig lights
+  ctx.beginPath();
+  ctx.arc(x,y-32*sc,2.5*sc,0,Math.PI*2);
+  ctx.fillStyle=`rgba(255,220,100,${0.5+0.3*Math.sin(frame*0.06)})`;
+  ctx.fill();
+  // Light beam
+  ctx.fillStyle=`rgba(255,220,100,0.03)`;
+  ctx.beginPath();
+  ctx.moveTo(x-2*sc,y-30*sc);
+  ctx.lineTo(x-15*sc,y+10*sc);
+  ctx.lineTo(x+15*sc,y+10*sc);
+  ctx.lineTo(x+2*sc,y-30*sc);
+  ctx.fill();
+  
+  // Rotary table animation
+  ctx.save();
+  ctx.translate(x,y+5*sc);
+  ctx.rotate(frame*0.08);
+  ctx.strokeStyle='rgba(212,160,23,0.5)';
+  ctx.lineWidth=1*sc;
+  ctx.beginPath();ctx.arc(0,0,3*sc,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-3*sc,0);ctx.lineTo(3*sc,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-3*sc);ctx.lineTo(0,3*sc);ctx.stroke();
+  ctx.restore();
+}
+
+function drawFracSpread(x,y,z,frame){
+  let sc=z;
+  // Frac pumps (multiple units)
+  for(let i=0;i<3;i++){
+    let px=x-12*sc+i*12*sc;
+    ctx.fillStyle='#c0392b';
+    ctx.fillRect(px-4*sc,y-2*sc,8*sc,5*sc);
+    ctx.strokeStyle='rgba(200,200,200,0.2)';
+    ctx.strokeRect(px-4*sc,y-2*sc,8*sc,5*sc);
+    // Vibration
+    let vib=Math.sin(frame*0.2+i)*0.5*sc;
+    ctx.fillStyle='#e74c3c';
+    ctx.fillRect(px-3*sc,y-1*sc+vib,6*sc,3*sc);
+  }
+  // Missile/manifold
+  ctx.strokeStyle='rgba(200,0,0,0.3)';
+  ctx.lineWidth=2*sc;
+  ctx.beginPath();
+  ctx.moveTo(x-16*sc,y+4*sc);
+  ctx.lineTo(x+16*sc,y+4*sc);
+  ctx.stroke();
+  // Wellhead
+  ctx.fillStyle='#d4a017';
+  ctx.fillRect(x-2*sc,y+5*sc,4*sc,3*sc);
+  // Label
+  ctx.fillStyle='rgba(192,57,43,0.6)';
+  ctx.font=`bold ${7*sc}px 'Share Tech Mono',monospace`;
+  ctx.textAlign='center';
+  ctx.fillText('FRAC',x,y-5*sc);
+  // Pressure animation
+  let prs=Math.abs(Math.sin(frame*0.05))*8000+2000;
+  ctx.fillStyle='rgba(231,76,60,0.4)';
+  ctx.fillText(fmtN(prs,0)+' psi',x,y+12*sc);
+}
+
+function drawFlowbackEquip(x,y,z,frame){
+  let sc=z;
+  // Separator
+  ctx.fillStyle='#555';
+  ctx.fillRect(x-6*sc,y-3*sc,12*sc,6*sc);
+  ctx.strokeStyle='rgba(155,89,182,0.3)';
+  ctx.strokeRect(x-6*sc,y-3*sc,12*sc,6*sc);
+  // Flare (animated)
+  ctx.beginPath();
+  let flareH=8+Math.sin(frame*0.15)*3;
+  ctx.moveTo(x+8*sc,y-3*sc);
+  ctx.lineTo(x+8*sc,y-(3+flareH)*sc);
+  ctx.strokeStyle='rgba(200,200,200,0.4)';
+  ctx.lineWidth=1.5*sc;
+  ctx.stroke();
+  // Flame
+  ctx.beginPath();
+  ctx.arc(x+8*sc,y-(3+flareH+2)*sc,(2+Math.sin(frame*0.2))*sc,0,Math.PI*2);
+  ctx.fillStyle=`rgba(255,${140+Math.sin(frame*0.3)*40},0,0.7)`;
+  ctx.fill();
+  ctx.fillStyle='rgba(155,89,182,0.5)';
+  ctx.font=`bold ${7*sc}px 'Share Tech Mono',monospace`;
+  ctx.textAlign='center';
+  ctx.fillText('FLOWBACK',x,y+8*sc);
+}
+
+function drawFacility(x,y,z){
+  let sc=z*0.8;
+  // Tank battery (2 tanks)
+  ctx.fillStyle='#444';
+  ctx.strokeStyle='rgba(212,160,23,0.2)';
+  ctx.lineWidth=1*sc;
+  for(let i=0;i<2;i++){
+    let tx=x+i*10*sc;
+    ctx.beginPath();
+    ctx.arc(tx,y,5*sc,0,Math.PI*2);
+    ctx.fill();ctx.stroke();
+    // Tank top
+    ctx.beginPath();
+    ctx.arc(tx,y,3*sc,0,Math.PI*2);
+    ctx.strokeStyle='rgba(212,160,23,0.15)';
+    ctx.stroke();
+  }
+  // Separator
+  ctx.fillStyle='#555';
+  ctx.fillRect(x-8*sc,y+8*sc,12*sc,4*sc);
+  ctx.strokeStyle='rgba(200,200,200,0.15)';
+  ctx.strokeRect(x-8*sc,y+8*sc,12*sc,4*sc);
+  // Heater treater
+  ctx.fillStyle='#4a4a4a';
+  ctx.fillRect(x+6*sc,y+8*sc,6*sc,5*sc);
+  // Pipeline
+  ctx.strokeStyle='rgba(200,200,200,0.1)';
+  ctx.lineWidth=1.5*sc;
+  ctx.setLineDash([3*sc,3*sc]);
+  ctx.beginPath();
+  ctx.moveTo(x+12*sc,y+10*sc);
+  ctx.lineTo(x+30*sc,y+10*sc);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Label
+  if(z>0.9){
+    ctx.fillStyle='rgba(212,160,23,0.3)';
+    ctx.font=`${6*sc}px 'Share Tech Mono',monospace`;
+    ctx.textAlign='center';
+    ctx.fillText('FACILITY',x+5*sc,y+18*sc);
+  }
+}
+
+function drawStake(x,y,z){
+  let sc=z;
+  ctx.strokeStyle='rgba(127,140,141,0.5)';
+  ctx.lineWidth=1.5*sc;
+  ctx.beginPath();ctx.moveTo(x,y+4*sc);ctx.lineTo(x,y-6*sc);ctx.stroke();
+  ctx.fillStyle='rgba(127,140,141,0.4)';
+  ctx.fillRect(x-3*sc,y-8*sc,6*sc,4*sc);
+  ctx.fillStyle='rgba(200,200,200,0.3)';
+  ctx.font=`${5*sc}px 'Share Tech Mono',monospace`;
+  ctx.textAlign='center';
+  ctx.fillText('PERMIT',x,y-5*sc);
+}
+
+function drawLeaseMarker(x,y,z){
+  let sc=z;
+  ctx.strokeStyle='rgba(212,160,23,0.3)';
+  ctx.lineWidth=1*sc;
+  ctx.setLineDash([2*sc,2*sc]);
+  ctx.strokeRect(x-6*sc,y-4*sc,12*sc,8*sc);
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(212,160,23,0.3)';
+  ctx.font=`${5*sc}px 'Share Tech Mono',monospace`;
+  ctx.textAlign='center';
+  ctx.fillText('LEASE',x,y+1*sc);
+}
+
+// ════════════════════════════════════════
+// UI CONTROLS
+// ════════════════════════════════════════
+
+let pendingPadX=0.35, pendingPadY=0.45;
+let selWellCount=2, selFormation='MB', selLateral=10000;
+
+function startGame(){
+  document.getElementById('mainMenu').classList.remove('active');
+  document.getElementById('gameScreen').classList.add('active');
+  drawMap();
+  renderWellCountBtns();
+  updateCostEst();
+  updateAll();
+}
+function showHow(){document.getElementById('mainMenu').classList.remove('active');document.getElementById('howScreen').classList.add('active')}
+function hideHow(){document.getElementById('howScreen').classList.remove('active');document.getElementById('mainMenu').classList.add('active')}
+function openAcquire(){document.getElementById('acqPanel').classList.add('open')}
+function closeAcquire(){document.getElementById('acqPanel').classList.remove('open')}
+function openDetail(wid){
+  let w=G.wells.find(x=>x.id===wid);
+  if(!w)return;
+  let dp=document.getElementById('detPanel');
+  let dc=document.getElementById('detContent');
+  let df=decRate(w,w.monthsOn);
+  let net=w.cumRev-w.cumOpex-(w.leaseCost+w.drillCost+w.completionCost+w.facilityCost);
+  
+  let liftHTML='';
+  if(w.status==='Producing'&&w.liftType==='Natural Flow'){
+    liftHTML=`
+      <div class="r-section">INSTALL ARTIFICIAL LIFT</div>
+      <div class="lift-options">
+        <button class="lift-btn" onclick="installLift('${w.id}','Rod Pump')">⚙️ Rod Pump<span class="cost">$80-180K | Reliable</span></button>
+        <button class="lift-btn" onclick="installLift('${w.id}','ESP')">⚡ ESP<span class="cost">$150-350K | High Rate</span></button>
+        <button class="lift-btn" onclick="installLift('${w.id}','Gas Lift')">💨 Gas Lift<span class="cost">$200-400K | Low Maint</span></button>
+      </div>`;
+  } else if(w.liftType!=='Natural Flow'){
+    liftHTML=`<div class="r-section">LIFT TYPE</div><div style="color:var(--gold);font-size:.85rem">${LIFT_TYPES[w.liftType]?.icon||''} ${w.liftType} installed</div>`;
   }
 
-  el.innerHTML = G.eventLog.slice(-15).reverse().map(e => {
-    let isGood = e.cat === 'good';
-    return `
-      <div style="padding:6px 0; border-bottom:1px solid rgba(127,140,141,0.1); font-size:0.8rem;">
-        <span style="color:${isGood ? 'var(--drill-green)' : 'var(--danger-red)'};">⚡ ${e.event}</span>
-        <span style="color:var(--steel);"> — ${e.well} (${e.label})</span>
-        <span style="color:${isGood ? 'var(--drill-green)' : 'var(--danger-red)'}; font-family:'Share Tech Mono',monospace; margin-left:8px;">
-          ${e.cost <= 0 ? '+' : '-'}${fmtCurrency(Math.abs(e.cost), true)}
-        </span>
-      </div>`;
-  }).join('');
-}
-
-function showEventToast(entry) {
-  let existing = document.querySelector('.event-toast');
-  if (existing) existing.remove();
-
-  let isGood = entry.cat === 'good';
-  let toast = document.createElement('div');
-  toast.className = `event-toast ${isGood ? 'positive' : ''}`;
-  toast.innerHTML = `
-    <div class="event-toast-title" style="color:${isGood ? 'var(--drill-green)' : 'var(--danger-red)'};">
-      ⚡ ${entry.event}
-    </div>
-    <div class="event-toast-desc">${entry.desc} — ${entry.well}</div>
-    <div style="font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:${isGood ? 'var(--drill-green)' : 'var(--danger-red)'}; margin-top:4px;">
-      ${entry.cost <= 0 ? '+' : '-'}${fmtCurrency(Math.abs(entry.cost))}
-    </div>
+  dc.innerHTML=`
+    <div class="r-panel-t">${w.name}</div>
+    <div style="color:var(--steel);font-size:.75rem;letter-spacing:1px">${w.id} · ${FORMATIONS[w.formation].name} · ${fmtN(w.lateral)} ft lateral</div>
+    <div class="wc-s s-${scls(w.status)}" style="display:inline-block;margin:8px 0">${w.status.toUpperCase()}</div>
+    
+    <div class="r-section">PRODUCTION</div>
+    <div class="r-row">Oil Rate <span style="color:var(--gold)">${fmtN(w.oilRate)} bbl/d</span></div>
+    <div class="r-row">Gas Rate <span style="color:var(--blue)">${fmtN(w.gasRate)} mcf/d</span></div>
+    <div class="r-row">Water Rate <span>${fmtN(w.waterRate)} bbl/d</span></div>
+    <div class="r-row">Decline Factor <span>${(df*100).toFixed(1)}%</span></div>
+    <div class="r-row">Months Online <span>${w.monthsOn}</span></div>
+    <div class="r-row">Cum Oil <span>${fmtN(w.cumOil)} bbl</span></div>
+    <div class="r-row">Cum Gas <span>${fmtN(w.cumGas)} mcf</span></div>
+    
+    <div class="r-section">ECONOMICS</div>
+    <div class="r-row">Lease Cost <span>${fmt$(w.leaseCost,1)}</span></div>
+    <div class="r-row">Drill Cost <span>${fmt$(w.drillCost,1)}</span></div>
+    <div class="r-row">Completion <span>${fmt$(w.completionCost,1)}</span></div>
+    <div class="r-row">Facility <span>${fmt$(w.facilityCost,1)}</span></div>
+    <div class="r-row">Total Revenue <span style="color:var(--green)">${fmt$(w.cumRev,1)}</span></div>
+    <div class="r-row">Total OPEX <span style="color:var(--red)">${fmt$(w.cumOpex,1)}</span></div>
+    <div class="r-row" style="border-top:1px solid rgba(212,160,23,0.2);padding-top:6px"><strong>Net Income</strong> <span style="color:${net>0?'var(--green)':'var(--red)'}"><strong>${fmt$(net,1)}</strong></span></div>
+    
+    ${liftHTML}
+    
+    ${w.status==='Producing'&&w.monthsOn>6?`<button class="r-btn" onclick="doWorkover('${w.id}')" style="margin-top:12px">🔧 WORKOVER ($200-700K)</button>`:''}
+    ${w.status==='Lease Acquired'?`<button class="r-btn" onclick="startWell('${w.id}');closeDetail()" style="margin-top:12px">⛏️ START PERMITTING</button>`:''}
   `;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 4500);
+  dp.classList.add('open');
+}
+function closeDetail(){document.getElementById('detPanel').classList.remove('open')}
+
+function scls(s){return s==='Producing'?'prod':s==='Drilling'?'drill':s==='Completing'?'comp':s==='Permitting'?'perm':s==='Flowback'?'flow':'lease'}
+
+function swTab(el,t){
+  document.querySelectorAll('.tc').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.getElementById('tc-'+t).classList.add('on');
+  el.classList.add('on');
 }
 
-function showGameOver() {
+function renderWellCountBtns(){
+  let html='';
+  [1,2,3,4,6].forEach(n=>{
+    html+=`<button class="lift-btn ${n===selWellCount?'sel':''}" onclick="selWC(${n})" style="flex:1;min-width:40px">${n}<span class="cost">${n===1?'Single':n+' Well'}</span></button>`;
+  });
+  document.getElementById('wellCountBtns').innerHTML=html;
+}
+
+function selWC(n){selWellCount=n;renderWellCountBtns();updateCostEst()}
+function selFormation(el,f){selFormation=f;document.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateCostEst()}
+function selLateral(el,l){selLateral=l;document.querySelectorAll('[data-l]').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateCostEst()}
+
+function updateCostEst(){
+  let fm=FORMATIONS[selFormation], ls=LATERAL_SCALE[selLateral];
+  let avgLease=7500*randI(640,1280);
+  let avgDrill=5500000*fm.costMult*ls.costMult;
+  let avgComp=5000000*fm.costMult*ls.costMult;
+  let facBase=1400000*(1+(selWellCount-1)*0.3);
+  let perWell=avgLease+avgDrill+avgComp+facBase/selWellCount;
+  let total=perWell*selWellCount;
+  document.getElementById('costEst').innerHTML=`
+    <div class="r-row">Wells <span>${selWellCount}</span></div>
+    <div class="r-row">Est. per well <span>${fmt$(perWell,1)}</span></div>
+    <div class="r-row">Shared facility <span>${fmt$(facBase,1)}</span></div>
+    <div class="r-row" style="border-top:1px solid rgba(212,160,23,0.2);padding-top:4px;color:var(--gold)"><strong>Total Budget</strong> <span><strong>${fmt$(total,1)}</strong></span></div>
+    <div class="r-row">Your Cash <span style="color:${G.cash>=total?'var(--green)':'var(--red)'}">${fmt$(G.cash,1)}</span></div>
+  `;
+}
+
+function buildPad(){
+  let name=document.getElementById('padNameIn').value||'Pad '+String.fromCharCode(65+G.pCtr);
+  // Use pending position or random
+  let mx=pendingPadX||rand(0.2,0.6);
+  let my=pendingPadY||rand(0.25,0.65);
+  let pad=createPad(name,selWellCount,selFormation,selLateral,mx,my);
+  // Randomize next position
+  pendingPadX=rand(0.15,0.65);
+  pendingPadY=rand(0.2,0.7);
+  document.getElementById('padNameIn').value='';
+  closeAcquire();
+  updateAll();
+  // Center camera on new pad
+  camX=-(mx-0.5)*mapW;
+  camY=-(my-0.5)*mapH;
+}
+
+function updateAll(){
+  document.getElementById('hudDate').textContent=MONTHS[G.month%12]+' '+G.year;
+  document.getElementById('hCash').textContent=fmt$(G.cash,1);
+  document.getElementById('hWTI').textContent='$'+G.wti.toFixed(2);
+  document.getElementById('hGas').textContent='$'+G.gas.toFixed(2);
+  let tOil=G.wells.reduce((s,w)=>s+(w.status==='Producing'?w.oilRate:0),0);
+  let tGas=G.wells.reduce((s,w)=>s+(w.status==='Producing'?w.gasRate:0),0);
+  document.getElementById('hOil').textContent=fmtN(tOil);
+  document.getElementById('hGR').textContent=fmtN(tGas);
+  document.getElementById('hWells').textContent=G.wells.length;
+  let pv=G.cash;G.wells.forEach(w=>{if(w.status==='Producing'){pv+=(w.oilRate*30.4*G.wti+w.gasRate*30.4*G.gas)*18}});
+  document.getElementById('hPV').textContent=fmt$(pv,1);
+  
+  updatePadList();
+  updateWellCards();
+  updateProdTab();
+  updateOpsTab();
+  updateEvtTab();
+  updateCostEst();
+}
+
+function updatePadList(){
+  let el=document.getElementById('padList');
+  if(!G.pads.length){el.innerHTML='<div style="color:var(--steel);font-size:.82rem">No pads yet. Click <strong style="color:var(--green)">+ NEW PAD</strong> or double-click the map.</div>';return}
+  el.innerHTML=G.pads.map(p=>{
+    let wells=G.wells.filter(w=>w.padId===p.id);
+    let prodWells=wells.filter(w=>w.status==='Producing');
+    let totalOil=prodWells.reduce((s,w)=>s+w.oilRate,0);
+    return`
+    <div class="pad-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="pad-title">🏗️ ${p.name}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--steel)">${FORMATIONS[p.formation].name} · ${fmtN(p.lateral)} ft</div>
+      </div>
+      <div class="pad-wells">
+        ${wells.map(w=>{
+          let col=w.status==='Producing'?'var(--green)':w.status==='Drilling'?'var(--blue)':w.status==='Completing'?'var(--amber)':w.status==='Flowback'?'#9b59b6':'var(--steel)';
+          return`<div class="pad-well-dot" style="border-color:${col};color:${col}" onclick="openDetail('${w.id}')" title="${w.name}: ${w.status}">${w.status==='Producing'?fmtN(w.oilRate):'·'}</div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--steel)">
+        <span>Total Oil: <span style="color:var(--gold)">${fmtN(totalOil)} bbl/d</span></span>
+        <span>${prodWells.length}/${wells.length} producing</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateWellCards(){
+  let el=document.getElementById('wellList');
+  if(!G.wells.length){el.innerHTML='<div style="color:var(--steel);font-size:.82rem;padding:20px;width:100%;text-align:center">No wells yet.</div>';return}
+  el.innerHTML=G.wells.map(w=>{
+    let sc=scls(w.status);
+    let prog='';
+    if(['Permitting','Drilling','Completing','Flowback'].includes(w.status)){
+      let pct=Math.min((w.dInPhase/Math.max(w.dReq,1))*100,100);
+      prog=`<div class="prog"><div class="prog-f" style="width:${pct}%"></div></div>`;
+    }
+    let stats='';
+    if(w.status==='Producing'){
+      stats=`<div class="wc-gl">Oil</div><div class="wc-gv" style="color:var(--gold)">${fmtN(w.oilRate)} bbl/d</div>
+        <div class="wc-gl">Gas</div><div class="wc-gv" style="color:var(--blue)">${fmtN(w.gasRate)} mcf/d</div>
+        <div class="wc-gl">Lift</div><div class="wc-gv">${w.liftType}</div>
+        <div class="wc-gl">Net</div><div class="wc-gv" style="color:${w.cumRev-w.cumOpex>0?'var(--green)':'var(--red)'}">${fmt$(w.cumRev-w.cumOpex,1)}</div>`;
+    } else if(w.status==='Lease Acquired'){
+      stats=`<div class="wc-gl">D&C Est</div><div class="wc-gv">${fmt$(w.drillCost+w.completionCost,1)}</div>`;
+    } else {
+      stats=`<div class="wc-gl">Phase</div><div class="wc-gv">${w.dInPhase}/${w.dReq}d</div>`;
+    }
+    return`<div class="wc ${sc}" onclick="openDetail('${w.id}')">
+      <div class="wc-h"><div class="wc-n">${w.name}</div><div class="wc-s s-${sc}">${w.status.toUpperCase()}</div></div>
+      <div class="wc-g">${stats}</div>${prog}
+      ${w.status==='Lease Acquired'?`<button class="wc-btn" onclick="event.stopPropagation();startWell('${w.id}')">⛏️ START</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function updateProdTab(){
+  let el=document.getElementById('prodArea');
+  if(!G.hist.length){el.innerHTML='<div style="color:var(--steel);font-size:.82rem">Advance the game to see production.</div>';return}
+  let h=G.hist[G.hist.length-1];
+  let pw=G.wells.filter(w=>w.status==='Producing').length;
+  el.innerHTML=`
+    <div style="display:flex;gap:20px;flex-wrap:wrap;font-family:'Share Tech Mono',monospace;font-size:.75rem">
+      <div><span style="color:var(--steel)">MONTHLY OIL:</span> <span style="color:var(--gold)">${fmtN(h.oil)} bbl</span></div>
+      <div><span style="color:var(--steel)">MONTHLY GAS:</span> <span style="color:var(--blue)">${fmtN(h.gas)} mcf</span></div>
+      <div><span style="color:var(--steel)">REVENUE:</span> <span style="color:var(--green)">${fmt$(h.rev,1)}/mo</span></div>
+      <div><span style="color:var(--steel)">OPEX:</span> <span style="color:var(--red)">${fmt$(h.opex,1)}/mo</span></div>
+      <div><span style="color:var(--steel)">NET:</span> <span style="color:${h.rev-h.opex>0?'var(--green)':'var(--red)'}">${fmt$(h.rev-h.opex,1)}/mo</span></div>
+      <div><span style="color:var(--steel)">WELLS:</span> <span>${pw} active</span></div>
+      <div><span style="color:var(--steel)">TOTAL REV:</span> <span style="color:var(--green)">${fmt$(G.tRev,1)}</span></div>
+      <div><span style="color:var(--steel)">TOTAL CAPEX:</span> <span>${fmt$(G.tCapex,1)}</span></div>
+    </div>
+    <canvas id="hChart" width="800" height="80" style="width:100%;height:80px;margin-top:8px"></canvas>
+  `;
+  drawHChart();
+}
+
+function drawHChart(){
+  let c=document.getElementById('hChart');
+  if(!c||G.hist.length<2)return;
+  let cx=c.getContext('2d'),w=c.width,h=c.height;
+  cx.clearRect(0,0,w,h);
+  let d=G.hist.slice(-48);
+  let mx=Math.max(...d.map(x=>x.cash)),mn=Math.min(...d.map(x=>x.cash)),rng=mx-mn||1;
+  // Cash
+  cx.beginPath();cx.strokeStyle='#d4a017';cx.lineWidth=2;
+  d.forEach((p,i)=>{let px=i/(d.length-1)*w,py=h-((p.cash-mn)/rng)*(h-8)-4;i===0?cx.moveTo(px,py):cx.lineTo(px,py)});
+  cx.stroke();cx.lineTo(w,h);cx.lineTo(0,h);cx.closePath();cx.fillStyle='rgba(212,160,23,0.06)';cx.fill();
+  // Revenue bars
+  let mr=Math.max(...d.map(x=>x.rev))||1;
+  d.forEach((p,i)=>{let px=i/(d.length-1)*w,bh=p.rev/mr*25;cx.fillStyle='rgba(39,174,96,0.2)';cx.fillRect(px-2,h-bh,4,bh)});
+}
+
+function updateOpsTab(){
+  let el=document.getElementById('opsArea');
+  let pw=G.wells.filter(w=>w.status==='Producing');
+  if(!pw.length){el.innerHTML='<div style="color:var(--steel);font-size:.82rem">No producing wells yet.</div>';return}
+  el.innerHTML=pw.map(w=>{
+    let df=decRate(w,w.monthsOn);
+    return`<div style="display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid rgba(127,140,141,0.06);font-size:.75rem">
+      <div style="min-width:120px;cursor:pointer" onclick="openDetail('${w.id}')">
+        <div style="font-family:'Teko',sans-serif;font-size:.95rem">${w.name}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--steel)">${fmtN(w.oilRate)} bbl/d · ${(df*100).toFixed(0)}% · ${w.liftType}</div>
+      </div>
+      ${w.liftType==='Natural Flow'&&df<0.35?'<button class="wc-btn" style="width:auto;margin:0;padding:3px 8px" onclick="openDetail(\''+w.id+'\')">⚠️ NEEDS LIFT</button>':''}
+    </div>`;
+  }).join('');
+}
+
+function updateEvtTab(){
+  let el=document.getElementById('evtArea');
+  if(!G.evtLog.length){el.innerHTML='<div style="color:var(--steel);font-size:.82rem">No events yet.</div>';return}
+  el.innerHTML=G.evtLog.slice(-20).reverse().map(e=>{
+    let good=e.cat==='good';
+    return`<div style="padding:4px 0;border-bottom:1px solid rgba(127,140,141,0.06);font-size:.75rem">
+      <span style="color:${good?'var(--green)':'var(--red)'}">⚡ ${e.event}</span>
+      <span style="color:var(--steel)"> — ${e.well} (${e.label})</span>
+      <span style="font-family:'Share Tech Mono',monospace;color:${good?'var(--green)':'var(--red)'}"> ${e.cost<=0?'+':'-'}${fmt$(Math.abs(e.cost),1)}</span>
+    </div>`;
+  }).join('');
+}
+
+function showToast(entry){
+  let old=document.querySelector('.toast');if(old)old.remove();
+  let t=document.createElement('div');
+  let good=entry.cat==='good';
+  t.className='toast '+(good?'good':'bad');
+  t.innerHTML=`<div class="toast-t" style="color:${good?'var(--green)':'var(--red)'}">⚡ ${entry.event}</div>
+    <div class="toast-d">${entry.desc} — ${entry.well}</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:.85rem;color:${good?'var(--green)':'var(--red)'};margin-top:4px">${entry.cost<=0?'+':'-'}${fmt$(Math.abs(entry.cost))}</div>`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),5000);
+}
+
+function showGO(){
   document.getElementById('gameScreen').classList.remove('active');
-  document.getElementById('gameOverScreen').classList.add('active');
-  let totalOil = G.wells.reduce((s,w) => s + w.cumOil, 0);
-  let totalGas = G.wells.reduce((s,w) => s + w.cumGas, 0);
-  document.getElementById('gameoverStats').innerHTML = `
-    <div class="gameover-stat">Survived <span>${G.month} months</span></div>
-    <div class="gameover-stat">Total Wells: <span>${G.wells.length}</span></div>
-    <div class="gameover-stat">Total Oil Produced: <span>${(totalOil/1000).toFixed(0)}K bbl</span></div>
-    <div class="gameover-stat">Total Gas Produced: <span>${(totalGas/1000).toFixed(0)}K mcf</span></div>
-    <div class="gameover-stat">Total Revenue: <span>${fmtCurrency(G.totalRevenue)}</span></div>
-    <div class="gameover-stat">Total CAPEX: <span>${fmtCurrency(G.totalCapex)}</span></div>
-  `;
+  document.getElementById('gameOver').classList.add('active');
+  let tO=G.wells.reduce((s,w)=>s+w.cumOil,0);
+  document.getElementById('goStats').innerHTML=`
+    <div class="go-stat">Survived <span>${G.month} months</span></div>
+    <div class="go-stat">Total Wells: <span>${G.wells.length}</span></div>
+    <div class="go-stat">Total Pads: <span>${G.pads.length}</span></div>
+    <div class="go-stat">Oil Produced: <span>${fmtN(tO)} bbl</span></div>
+    <div class="go-stat">Revenue: <span>${fmt$(G.tRev)}</span></div>
+    <div class="go-stat">CAPEX: <span>${fmt$(G.tCapex)}</span></div>`;
 }
 
-// ════════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════════
-window.addEventListener('load', initMenuBG);
+// Menu background
+function initMenuBG(){
+  let c=document.getElementById('menuBg'),cx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  let pts=[];for(let i=0;i<50;i++)pts.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.5,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,a:Math.random()*.2+.1});
+  function draw(){
+    cx.clearRect(0,0,c.width,c.height);
+    pts.forEach((p,i)=>{
+      pts.forEach((q,j)=>{if(j<=i)return;let d=Math.hypot(p.x-q.x,p.y-q.y);if(d<180){cx.beginPath();cx.strokeStyle=`rgba(212,160,23,${.04*(1-d/180)})`;cx.lineWidth=.5;cx.moveTo(p.x,p.y);cx.lineTo(q.x,q.y);cx.stroke()}});
+      cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(212,160,23,${p.a})`;cx.fill();
+      p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>c.width)p.vx*=-1;if(p.y<0||p.y>c.height)p.vy*=-1;
+    });
+    if(document.getElementById('mainMenu').classList.contains('active'))requestAnimationFrame(draw);
+  }
+  draw();
+}
+window.addEventListener('load',initMenuBG);
 </script>
 </body>
 </html>
