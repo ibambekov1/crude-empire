@@ -262,8 +262,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-fam
     
     <div class="r-section">FORMATION TARGET</div>
     <div style="display:flex;gap:6px;margin:6px 0">
-      <button class="lift-btn sel" onclick="selFormation(this,'MB')" data-f="MB">Middle Bakken<span class="cost">Higher Oil Cut</span></button>
-      <button class="lift-btn" onclick="selFormation(this,'TF')" data-f="TF">Three Forks<span class="cost">Higher Gas, Lower Cost</span></button>
+      <button class="lift-btn sel" onclick="pickFormation(this,'MB')" data-f="MB">Middle Bakken<span class="cost">Higher Oil Cut</span></button>
+      <button class="lift-btn" onclick="pickFormation(this,'TF')" data-f="TF">Three Forks<span class="cost">Higher Gas, Lower Cost</span></button>
     </div>
 
     <div class="r-section">LATERAL LENGTH</div>
@@ -1191,7 +1191,7 @@ function renderWellCountBtns(){
 }
 
 function selWC(n){selWellCount=n;renderWellCountBtns();updateCostEst()}
-function selFormation(el,f){selFormation=f;document.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateCostEst()}
+function pickFormation(el,f){selFormation=f;document.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateCostEst()}
 function selLateral(el,l){selLateral=l;document.querySelectorAll('[data-l]').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateCostEst()}
 
 function updateCostEst(){
