@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRUDE EMPIRE — Williston Basin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@300;400;500;600;700&family=Chakra+Petch:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#d4a017;--amber:#f4a523;--dark:#0a0a0a;--bg:#0d1117;--green:#27ae60;--red:#e74c3c;--blue:#2d9cdb;--steel:#7f8c8d;--silver:#bdc3c7;--text:#ecf0f1}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Chakra Petch',sans-serif;color:var(--text);user-select:none}
+.screen{position:fixed;top:0;left:0;width:100%;height:100%;display:none;z-index:100}.screen.active{display:flex}
+#mainMenu{flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 120%,rgba(212,160,23,0.06) 0%,transparent 60%),linear-gradient(180deg,#030305 0%,#0d1117 50%,#0a0f1a 100%)}
+.menu-bg{position:absolute;top:0;left:0;width:100%;height:100%}
+.menu-content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;animation:fadeUp 1.5s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{text-shadow:0 0 40px rgba(212,160,23,0.3)}50%{text-shadow:0 0 80px rgba(212,160,23,0.5)}}
+.logo{font-family:'Teko',sans-serif;font-weight:700;font-size:6rem;color:var(--gold);letter-spacing:14px;text-transform:uppercase;line-height:1;animation:glow 3s ease-in-out infinite}
+.tagline{font-family:'Share Tech Mono',monospace;font-size:.85rem;color:var(--steel);letter-spacing:8px;text-transform:uppercase;margin:8px 0 40px}
+.menu-btn{display:block;width:340px;padding:16px 32px;margin:8px 0;background:transparent;border:1px solid rgba(212,160,23,0.3);color:var(--gold);font-family:'Teko',sans-serif;font-size:1.5rem;font-weight:500;letter-spacing:6px;text-transform:uppercase;cursor:pointer;transition:all .3s}
+.menu-btn:hover{border-color:var(--gold);background:rgba(212,160,23,0.06);box-shadow:0 0 40px rgba(212,160,23,0.12);transform:scale(1.02)}
+.menu-btn.primary{border-width:2px;border-color:var(--gold);background:rgba(212,160,23,0.06)}
+.menu-sub{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:rgba(127,140,141,0.4);letter-spacing:3px;position:absolute;bottom:24px}
+#howScreen{flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
+.how-box{max-width:640px;padding:40px}.how-title{font-family:'Teko',sans-serif;font-size:2.5rem;color:var(--gold);letter-spacing:6px;margin-bottom:16px}
+.how-text{color:var(--silver);line-height:2.2;font-size:.85rem}.how-text strong{color:var(--text)}.how-text .hl{color:var(--gold)}
+#gameScreen{flex-direction:column;position:relative}
+#map{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}.leaflet-container{background:#1a1e12!important}
+.hud{position:relative;z-index:1000;pointer-events:none}.hud>*{pointer-events:auto}
+.hud-top{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 16px;background:linear-gradient(180deg,rgba(10,10,10,.95) 0%,rgba(10,10,10,.6) 80%,transparent 100%)}
+.hud-logo{font-family:'Teko',sans-serif;font-size:1.3rem;font-weight:600;color:var(--gold);letter-spacing:5px}
+.hud-loc{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--steel);letter-spacing:2px}
+.hud-clock{font-family:'Teko',sans-serif;font-size:1.6rem;font-weight:600;color:var(--gold);letter-spacing:3px;line-height:1}
+.hud-revenue-tick{font-family:'Share Tech Mono',monospace;font-size:.68rem;margin-top:2px}
+.hud-metrics{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.hud-m{text-align:center;min-width:70px}
+.hud-m-label{font-family:'Share Tech Mono',monospace;font-size:.48rem;color:var(--steel);letter-spacing:1.5px;text-transform:uppercase}
+.hud-m-val{font-family:'Teko',sans-serif;font-size:1.2rem;font-weight:600;line-height:1.1}
+.hud-m-val.gold{color:var(--gold)}.hud-m-val.green{color:var(--green)}.hud-m-val.blue{color:var(--blue)}
+.time-row{display:flex;gap:3px;margin-top:4px}
+.t-btn{padding:2px 7px;background:rgba(212,160,23,0.08);border:1px solid rgba(212,160,23,0.25);color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:.6rem;cursor:pointer;transition:all .2s}
+.t-btn:hover{background:rgba(212,160,23,0.2);border-color:var(--gold)}.t-btn.on{background:rgba(212,160,23,0.25);border-color:var(--gold)}
+.t-btn.act{border-color:var(--green);color:var(--green)}.t-btn.pause{border-color:var(--red);color:var(--red)}
+.hud-bot{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(8,8,12,.97) 0%,rgba(8,8,12,.8) 90%,transparent 100%);padding:12px 16px 8px;z-index:1000}
+.tabs{display:flex;gap:2px;margin-bottom:6px}
+.tab{padding:3px 12px;background:transparent;border:1px solid rgba(127,140,141,0.15);border-bottom:none;color:var(--steel);font-family:'Chakra Petch',sans-serif;font-size:.68rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.tab.on,.tab:hover{color:var(--gold);border-color:rgba(212,160,23,0.3);background:rgba(212,160,23,0.04)}
+.tc{display:none;min-height:100px;max-height:140px;overflow-y:auto}.tc.on{display:block}
+.wl{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.wl::-webkit-scrollbar{height:4px}.wl::-webkit-scrollbar-thumb{background:rgba(212,160,23,0.2)}
+.wc{min-width:200px;max-width:220px;background:linear-gradient(135deg,rgba(20,20,36,.9),rgba(12,40,70,.4));border:1px solid rgba(212,160,23,0.12);border-left:3px solid var(--gold);padding:7px 9px;flex-shrink:0;cursor:pointer;transition:all .3s;font-size:.65rem}
+.wc:hover{border-color:var(--gold);transform:translateY(-2px)}
+.wc.prod{border-left-color:var(--green)}.wc.drill{border-left-color:var(--blue)}.wc.comp{border-left-color:var(--amber)}.wc.wo{border-left-color:#e67e22}
+.wc-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.wc-n{font-family:'Teko',sans-serif;font-size:.9rem;font-weight:500;letter-spacing:1px}
+.wc-s{font-family:'Share Tech Mono',monospace;font-size:.48rem;padding:1px 4px;border-radius:2px;letter-spacing:1px}
+.s-prod{background:rgba(39,174,96,0.15);color:var(--green)}.s-drill{background:rgba(45,156,219,0.15);color:var(--blue)}.s-comp{background:rgba(244,165,35,0.15);color:var(--amber)}.s-perm{background:rgba(127,140,141,0.15);color:var(--steel)}.s-lease{background:rgba(212,160,23,0.1);color:var(--gold)}.s-flow{background:rgba(155,89,182,0.15);color:#9b59b6}.s-wo{background:rgba(230,126,34,0.15);color:#e67e22}
+.wc-g{display:grid;grid-template-columns:1fr 1fr;gap:1px;font-family:'Share Tech Mono',monospace;font-size:.58rem}
+.wc-gl{color:var(--steel)}.wc-gv{text-align:right;color:var(--text)}
+.prog{width:100%;height:3px;background:rgba(127,140,141,0.15);margin-top:3px;overflow:hidden}.prog-f{height:100%;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width .5s}
+.wc-btn{width:100%;margin-top:4px;padding:3px;background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);color:var(--green);font-family:'Chakra Petch',sans-serif;font-size:.6rem;font-weight:600;cursor:pointer;letter-spacing:1px}.wc-btn:hover{background:rgba(39,174,96,0.2)}
+.r-panel{position:fixed;right:-400px;top:0;bottom:0;width:380px;background:linear-gradient(180deg,rgba(8,12,20,.98),rgba(8,8,12,.98));border-left:1px solid rgba(212,160,23,0.15);z-index:1500;transition:right .4s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:16px 18px}.r-panel.open{right:0}
+.r-panel-t{font-family:'Teko',sans-serif;font-size:1.4rem;font-weight:600;color:var(--gold);letter-spacing:4px;margin-bottom:8px}
+.r-close{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--steel);font-size:1.2rem;cursor:pointer}.r-close:hover{color:var(--text)}
+.r-input{width:100%;padding:7px 9px;background:rgba(20,20,36,0.8);border:1px solid rgba(212,160,23,0.15);color:var(--text);font-family:'Chakra Petch',sans-serif;font-size:.8rem;margin:5px 0;outline:none}.r-input:focus{border-color:var(--gold)}
+.r-btn{width:100%;padding:9px;background:linear-gradient(135deg,rgba(212,160,23,0.15),rgba(212,160,23,0.08));border:2px solid var(--gold);color:var(--gold);font-family:'Teko',sans-serif;font-size:1.05rem;font-weight:500;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:5px}.r-btn:hover{background:rgba(212,160,23,0.25)}
+.r-section{margin:12px 0 5px;font-family:'Teko',sans-serif;font-size:.95rem;color:var(--amber);letter-spacing:2px}
+.r-row{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--silver);padding:2px 0;border-bottom:1px solid rgba(127,140,141,0.06)}.r-row span{color:var(--text)}
+.lift-btn{padding:5px 8px;background:rgba(20,20,36,.8);border:1px solid rgba(127,140,141,0.2);color:var(--silver);font-family:'Chakra Petch',sans-serif;font-size:.65rem;cursor:pointer;transition:all .2s;flex:1;text-align:center;min-width:70px}.lift-btn:hover{border-color:var(--gold);color:var(--gold)}.lift-btn.sel{border-color:var(--gold);color:var(--gold);background:rgba(212,160,23,0.1);border-width:2px}.lift-btn .cost{display:block;font-family:'Share Tech Mono',monospace;font-size:.5rem;color:var(--steel);margin-top:1px}
+.d-panel{position:fixed;left:-440px;top:0;bottom:0;width:420px;background:linear-gradient(180deg,rgba(8,12,20,.98),rgba(8,8,12,.98));border-right:1px solid rgba(212,160,23,0.15);z-index:1500;transition:left .4s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:16px 18px}.d-panel.open{left:0}
+.lift-options{display:flex;gap:4px;flex-wrap:wrap;margin:5px 0}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);padding:10px 22px;z-index:2000;animation:tIn .4s ease-out,tOut .4s ease-in 4s forwards;max-width:440px;text-align:center}
+.toast.bad{background:linear-gradient(135deg,rgba(30,0,0,.95),rgba(50,0,0,.95));border:1px solid var(--red);box-shadow:0 0 25px rgba(231,76,60,0.15)}
+.toast.good{background:linear-gradient(135deg,rgba(0,30,0,.95),rgba(0,50,0,.95));border:1px solid var(--green);box-shadow:0 0 25px rgba(39,174,96,0.15)}
+.toast-t{font-family:'Teko',sans-serif;font-size:1rem;font-weight:600;letter-spacing:2px}.toast-d{font-size:.7rem;color:var(--silver);margin-top:2px}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes tOut{from{opacity:1}to{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+#gameOver{flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse,rgba(231,76,60,0.06),transparent 60%),linear-gradient(180deg,#030305,#0d1117)}
+.go-t{font-family:'Teko',sans-serif;font-size:4.5rem;font-weight:700;color:var(--red);letter-spacing:12px;text-shadow:0 0 40px rgba(231,76,60,0.3)}
+.go-sub{font-family:'Chakra Petch',sans-serif;color:var(--steel);letter-spacing:3px}.go-stats{margin:30px 0;text-align:center}
+.go-stat{font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--silver);margin:8px 0}.go-stat span{color:var(--gold)}
+/* SVG marker styles */
+.svg-equip{position:absolute;top:50%;left:50%;pointer-events:none}
+/* Vehicle markers */
+.vehicle-marker{background:none!important;border:none!important;z-index:800!important}
+.truck-icon{font-size:18px;text-shadow:0 1px 3px rgba(0,0,0,0.8);filter:drop-shadow(0 0 2px rgba(0,0,0,0.5))}
+/* Legend */
+.legend{position:fixed;bottom:168px;left:12px;z-index:1000;background:rgba(8,8,12,.9);border:1px solid rgba(212,160,23,0.1);padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:.52rem;pointer-events:none}
+.legend-item{display:flex;align-items:center;gap:4px;margin:2px 0;color:var(--silver)}.legend-dot{width:7px;height:7px;border-radius:50%}
+@media(max-width:768px){.logo{font-size:3rem;letter-spacing:6px}.r-panel,.d-panel{width:100%}.r-panel{right:-100%}.d-panel{left:-100%}}
+</style>
+</head>
+<body>
+<div id="mainMenu" class="screen active">
+  <canvas id="menuBg" class="menu-bg" style="position:absolute;top:0;left:0;width:100%;height:100%"></canvas>
+  <div class="menu-content">
+    <div class="logo">🛢️ CRUDE EMPIRE</div>
+    <div class="tagline">Williston Basin · Satellite Edition</div>
+    <button class="menu-btn primary" onclick="startGame()">DRILL THE BAKKEN</button>
+    <button class="menu-btn" onclick="showHow()">HOW TO PLAY</button>
+    <div class="menu-sub">V5.0 — SATELLITE MAP — ANIMATED TRUCKS — $100M</div>
+  </div>
+</div>
+<div id="howScreen" class="screen">
+  <div class="how-box">
+    <div class="how-title">HOW TO PLAY</div>
+    <div class="how-text">
+      <p>🏁 <strong>START</strong> — $<span class="hl">100M</span> cash. Time ticks automatically (1 day = 15 sec).</p>
+      <p>🗺️ <strong>MAP</strong> — Real satellite imagery. Double-click roads to place pads.</p>
+      <p>🚛 <strong>TRUCKS</strong> — Oil tankers and SWD water trucks run from wells to terminals.</p>
+      <p>🔧 <strong>WORKOVERS</strong> — Rigs dispatch from Watford City and drive to location.</p>
+      <p>💥 <strong>FRAC</strong> — Frac fleets mobilize to completion sites.</p>
+      <p>📉 <strong>DECLINE</strong> — Exponential decline. Wells fail every 3-12 months.</p>
+      <p>💀 <strong>BANKRUPT</strong> — Cash below -$10M = game over.</p>
+    </div>
+    <button class="menu-btn" style="margin:24px auto 0" onclick="hideHow()">BACK</button>
+  </div>
+</div>
+<div id="gameScreen" class="screen">
+  <div id="map"></div>
+  <div class="legend">
+    <div style="font-size:.6rem;color:var(--gold);letter-spacing:2px;margin-bottom:2px">LEGEND</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Producing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Drilling</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Completing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e67e22"></div> Workover</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--steel)"></div> Permit/Lease</div>
+    <div class="legend-item">🚛 Oil Truck &nbsp; 💧 SWD Truck</div>
+    <div class="legend-item">🔧 WO Rig &nbsp; 💥 Frac Fleet</div>
+  </div>
+  <div class="hud">
+    <div class="hud-top">
+      <div>
+        <div class="hud-logo">🛢️ CRUDE EMPIRE</div>
+        <div class="hud-loc">WILLISTON BASIN · NORTH DAKOTA</div>
+        <div class="hud-clock" id="hudClock">JAN 1, 2026 · 06:00</div>
+        <div class="hud-revenue-tick"><span style="color:var(--green)" id="hudHR">+$0/day</span> <span style="color:var(--red);margin-left:5px" id="hudHO">-$0/day</span> <span style="margin-left:5px" id="hudNet">NET $0/day</span></div>
+        <div class="time-row">
+          <button class="t-btn pause" id="btnPause" onclick="togglePause()">⏸</button>
+          <button class="t-btn on" onclick="setSpeed(1)">1x</button>
+          <button class="t-btn" onclick="setSpeed(3)">3x</button>
+          <button class="t-btn" onclick="setSpeed(10)">10x</button>
+          <button class="t-btn" onclick="setSpeed(30)">30x</button>
+          <button class="t-btn act" onclick="openAcquire()">+ PAD</button>
+        </div>
+      </div>
+      <div class="hud-metrics">
+        <div class="hud-m"><div class="hud-m-label">CASH</div><div class="hud-m-val gold" id="hCash">$100.0M</div></div>
+        <div class="hud-m"><div class="hud-m-label">WTI</div><div class="hud-m-val green" id="hWTI">$70.00</div></div>
+        <div class="hud-m"><div class="hud-m-label">GAS</div><div class="hud-m-val blue" id="hGas">$3.50</div></div>
+        <div class="hud-m"><div class="hud-m-label">OIL bbl/d</div><div class="hud-m-val gold" id="hOil">0</div></div>
+        <div class="hud-m"><div class="hud-m-label">GAS mcf/d</div><div class="hud-m-val blue" id="hGR">0</div></div>
+        <div class="hud-m"><div class="hud-m-label">WELLS</div><div class="hud-m-val" id="hWells" style="color:var(--text)">0</div></div>
+        <div class="hud-m"><div class="hud-m-label">PORTFOLIO</div><div class="hud-m-val gold" id="hPV">$100.0M</div></div>
+      </div>
+    </div>
+    <div class="hud-bot">
+      <div class="tabs">
+        <button class="tab on" onclick="swTab(this,'wells')">🛢️ WELLS</button>
+        <button class="tab" onclick="swTab(this,'ops')">🔧 OPS</button>
+        <button class="tab" onclick="swTab(this,'prod')">📊 PROD</button>
+        <button class="tab" onclick="swTab(this,'events')">⚡ EVENTS</button>
+      </div>
+      <div id="tc-wells" class="tc on"><div class="wl" id="wellList"><div style="color:var(--steel);font-size:.75rem;padding:14px;width:100%;text-align:center">Double-click the map to place pads on roads.</div></div></div>
+      <div id="tc-ops" class="tc"><div id="opsArea" style="color:var(--steel);font-size:.75rem">No wells.</div></div>
+      <div id="tc-prod" class="tc"><div id="prodArea" style="color:var(--steel);font-size:.75rem">Start clock.</div></div>
+      <div id="tc-events" class="tc"><div id="evtArea" style="color:var(--steel);font-size:.75rem">No events.</div></div>
+    </div>
+  </div>
+  <div class="r-panel" id="acqPanel">
+    <button class="r-close" onclick="closeAcquire()">✕</button>
+    <div class="r-panel-t">NEW WELL PAD</div>
+    <p style="color:var(--steel);font-size:.72rem;margin-bottom:8px">Build on the Bakken. Shared facilities save 30%/well.</p>
+    <div class="r-section">NAME</div><input class="r-input" id="padNameIn" placeholder="Pad name...">
+    <div class="r-section">WELLS</div><div style="display:flex;gap:4px;margin:4px 0" id="wcBtns"></div>
+    <div class="r-section">FORMATION</div>
+    <div style="display:flex;gap:4px;margin:4px 0"><button class="lift-btn sel" onclick="pickFormation(this,'MB')" data-f="MB">Mid Bakken<span class="cost">Oil</span></button><button class="lift-btn" onclick="pickFormation(this,'TF')" data-f="TF">Three Forks<span class="cost">Gas</span></button></div>
+    <div class="r-section">LATERAL</div>
+    <div style="display:flex;gap:4px;margin:4px 0"><button class="lift-btn" onclick="pickLateral(this,5000)" data-l="5000">5K<span class="cost">Cheap</span></button><button class="lift-btn sel" onclick="pickLateral(this,10000)" data-l="10000">10K<span class="cost">Std</span></button><button class="lift-btn" onclick="pickLateral(this,15000)" data-l="15000">15K<span class="cost">Big</span></button></div>
+    <div class="r-section">ESTIMATE</div><div id="costEst" style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--silver)"></div>
+    <button class="r-btn" onclick="buildPad()">BUILD PAD</button>
+  </div>
+  <div class="d-panel" id="detPanel"><button class="r-close" onclick="closeDetail()" style="position:absolute;right:12px">✕</button><div id="detContent"></div></div>
+</div>
+<div id="gameOver" class="screen">
+  <div class="go-t">BANKRUPT</div><div class="go-sub">COMPANY LIQUIDATED</div>
+  <div class="go-stats" id="goStats"></div>
+  <button class="menu-btn primary" onclick="location.reload()">TRY AGAIN</button>
+</div>
+
+<script>
+const MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const rand=(a,b)=>Math.random()*(b-a)+a;
+const randI=(a,b)=>Math.floor(rand(a,b+1));
+const fmt$=(v,s)=>{if(s){if(Math.abs(v)>=1e9)return'$'+(v/1e9).toFixed(1)+'B';if(Math.abs(v)>=1e6)return'$'+(v/1e6).toFixed(1)+'M';if(Math.abs(v)>=1e3)return'$'+(v/1e3).toFixed(0)+'K'}return'$'+v.toLocaleString('en-US',{maximumFractionDigits:0})};
+const fmtN=(v,d=0)=>v.toLocaleString('en-US',{maximumFractionDigits:d});
+const FORMATIONS={MB:{name:'Middle Bakken',ipOilMult:1.0,ipGasMult:0.7,costMult:1.0,gorBase:[600,1400],gorRate:0.10},TF:{name:'Three Forks',ipOilMult:0.85,ipGasMult:1.3,costMult:0.9,gorBase:[900,2200],gorRate:0.14}};
+const LATERAL_SCALE={5000:{ipMult:0.55,costMult:0.65},10000:{ipMult:1.0,costMult:1.0},15000:{ipMult:1.35,costMult:1.3}};
+const LIFT_TYPES={'Natural Flow':{cost:[0,0],efficiency:1.0,opexAdd:0,icon:'🔵'},'Rod Pump':{cost:[80000,180000],efficiency:0.9,opexAdd:1.5,icon:'⚙️'},'ESP':{cost:[150000,350000],efficiency:0.95,opexAdd:3.0,icon:'⚡'},'Gas Lift':{cost:[200000,400000],efficiency:0.92,opexAdd:2.0,icon:'💨'}};
+const EVENTS=[
+  {name:'Wellbore Issue',desc:'Casing leak.',cat:'ops',cost:[200000,800000],pImpact:0,dur:2,prob:.025},
+  {name:'Equipment Failure',desc:'Separator down.',cat:'ops',cost:[25000,150000],pImpact:.3,dur:1,prob:.04},
+  {name:'Blowout!',desc:'Lost well control!',cat:'ops',cost:[1000000,5000000],pImpact:0,dur:3,prob:.004},
+  {name:'Freeze-Off',desc:'Wells shut in.',cat:'weather',cost:[80000,400000],pImpact:0,dur:1,prob:.03},
+  {name:'NDIC Inspection',desc:'Regulators.',cat:'reg',cost:[10000,80000],pImpact:1,dur:0,prob:.05},
+  {name:'Saltwater Spill',desc:'Remediation.',cat:'reg',cost:[250000,2000000],pImpact:.5,dur:2,prob:.015},
+  {name:'Frac Hit',desc:'Offset communication.',cat:'ops',cost:[100000,600000],pImpact:.7,dur:1,prob:.03},
+  {name:'Stuck Pipe',desc:'Fishing job.',cat:'ops',cost:[300000,1500000],pImpact:1,dur:1,prob:.025},
+  {name:'Outperforming! 🎉',desc:'Great rock!',cat:'good',cost:[0,0],pImpact:1.35,dur:6,prob:.04},
+  {name:'Tax Incentive 💰',desc:'Tax holiday.',cat:'good',cost:[-300000,-80000],pImpact:1,dur:0,prob:.025},
+];
+
+// ═══ KEY LOCATIONS (real coordinates) ═══
+const WATFORD_CITY={lat:47.8043,lng:-103.2838};
+const SWD_SITES=[{lat:47.75,lng:-103.35,name:'SWD Alpha'},{lat:47.85,lng:-103.15,name:'SWD Beta'},{lat:47.90,lng:-103.50,name:'SWD Gamma'}];
+const OIL_TERMINAL={lat:47.80,lng:-103.28,name:'Watford City Terminal'};
+
+// ═══ ROAD GRID — section lines every ~1 mile in Bakken ═══
+function snapToRoad(lat,lng){
+  // Section roads run approx every 0.0145° lat and 0.0185° lng in ND
+  let sLat=Math.round(lat/0.0145)*0.0145;
+  let sLng=Math.round(lng/0.0185)*0.0185;
+  // Offset slightly from intersection (pad is off road)
+  return{lat:sLat+rand(-0.003,0.003),lng:sLng+rand(-0.003,0.003)};
+}
+
+// ═══ GAME STATE ═══
+let G={cash:100_000_000,pads:[],wells:[],month:0,year:2026,day:1,hour:6,wti:70,gas:3.5,tRev:0,tOpex:0,tCapex:0,wCtr:0,pCtr:0,aEvts:[],evtLog:[],hist:[],over:false,speed:1,paused:true,hourlyRev:0,hourlyOpex:0,tickAccum:0,vehicles:[]};
+
+// ═══ VEHICLE SYSTEM ═══
+function spawnVehicle(type,fromLat,fromLng,toLat,toLng,well){
+  let icons={'oil_truck':'🚛','swd_truck':'💧','wo_rig':'🔧','frac_fleet':'💥'};
+  let colors={'oil_truck':'#d4a017','swd_truck':'#2d9cdb','wo_rig':'#e67e22','frac_fleet':'#e74c3c'};
+  // Create route with waypoints (simulate road travel via intermediate points)
+  let midLat=(fromLat+toLat)/2+rand(-0.02,0.02);
+  let midLng=(fromLng+toLng)/2+rand(-0.02,0.02);
+  let route=[[fromLat,fromLng],[midLat,midLng],[toLat,toLng]];
+  // Draw route line
+  let line=L.polyline(route,{color:colors[type],weight:2,opacity:0.4,dashArray:'6,8'}).addTo(map);
+  // Create moving marker
+  let icon=L.divIcon({className:'vehicle-marker',html:`<div class="truck-icon">${icons[type]}</div>`,iconSize:[24,24],iconAnchor:[12,12]});
+  let marker=L.marker([fromLat,fromLng],{icon:icon,zIndexOffset:900}).addTo(map);
+  let v={type,marker,line,route,progress:0,speed:type==='wo_rig'?0.003:0.005,wellId:well?.id,returning:false,done:false};
+  G.vehicles.push(v);
+  return v;
+}
+
+function updateVehicles(){
+  G.vehicles.forEach(v=>{
+    if(v.done)return;
+    v.progress+=v.speed*G.speed;
+    if(v.progress>=1){
+      if(!v.returning){
+        v.returning=true;v.progress=0;
+        v.route=v.route.slice().reverse();
+      }else{
+        v.done=true;
+        map.removeLayer(v.marker);
+        map.removeLayer(v.line);
+        return;
+      }
+    }
+    // Interpolate position along route
+    let totalSegs=v.route.length-1;
+    let segFloat=v.progress*totalSegs;
+    let seg=Math.min(Math.floor(segFloat),totalSegs-1);
+    let t=segFloat-seg;
+    let lat=v.route[seg][0]+(v.route[seg+1][0]-v.route[seg][0])*t;
+    let lng=v.route[seg][1]+(v.route[seg+1][1]-v.route[seg][1])*t;
+    v.marker.setLatLng([lat,lng]);
+  });
+  G.vehicles=G.vehicles.filter(v=>!v.done);
+}
+
+// Spawn trucks periodically for producing wells
+function maybeSpawnTrucks(){
+  G.wells.forEach(w=>{
+    if(w.status!=='Producing')return;
+    // Oil truck ~every 2 game days
+    if(Math.random()<0.02*G.speed&&w.oilRate>50){
+      spawnVehicle('oil_truck',w.lat,w.lng,OIL_TERMINAL.lat,OIL_TERMINAL.lng,w);
+    }
+    // SWD truck ~every 3 game days
+    if(Math.random()<0.015*G.speed&&w.waterRate>30){
+      let swd=SWD_SITES[randI(0,SWD_SITES.length-1)];
+      spawnVehicle('swd_truck',w.lat,w.lng,swd.lat,swd.lng,w);
+    }
+  });
+}
+
+// ═══ TIMING ═══
+const TICK_RATE=100;
+const HOURS_PER_TICK_1X=24/150;
+let tickTimer=null;
+function startTicking(){
+  if(tickTimer)clearInterval(tickTimer);
+  tickTimer=setInterval(()=>{
+    if(G.paused||G.over)return;
+    let h=HOURS_PER_TICK_1X*G.speed;
+    G.tickAccum+=h;
+    while(G.tickAccum>=1){G.tickAccum-=1;advHour()}
+    updateVehicles();
+    maybeSpawnTrucks();
+    updateClockDisplay();
+    updateCashDisplay();
+  },TICK_RATE);
+}
+
+function advHour(){
+  G.hour++;
+  let hRev=0,hOpex=0;
+  G.wells.forEach(w=>{
+    if(w.status==='Producing'){
+      let em=1;G.aEvts.forEach(e=>{if(e.wid===w.id||e.wid==='ALL')em*=e.pi});
+      let t=w.monthsOn/12;let df=Math.max(Math.exp(-w.di*t),0.03);
+      let or=w.ipOil*df*em,cGOR=w.gor*(1+w.gorRate*t),gr=or*cGOR/1000;
+      let cWC=Math.min(w.wc+w.wcRate*t,0.95),tf=or/Math.max(1-cWC,0.05),wr=tf-or;
+      let oH=or/24,gH=gr/24,wH=wr/24;
+      let rev=oH*G.wti+gH*G.gas,boe=oH+gH/6;
+      let opex=boe*w.loe+wH*1.5+rev*0.05+(LIFT_TYPES[w.liftType]?.opexAdd||0)*boe;
+      hRev+=rev;hOpex+=opex;
+      w.oilRate=or;w.gasRate=gr;w.waterRate=wr;
+      w.cumOil+=oH;w.cumGas+=gH;w.cumWater+=wH;w.cumRev+=rev;w.cumOpex+=opex;
+    }
+  });
+  G.cash+=hRev-hOpex;G.tRev+=hRev;G.tOpex+=hOpex;G.hourlyRev=hRev;G.hourlyOpex=hOpex;
+  if(G.hour>=24){G.hour=0;advDay()}
+}
+
+function advDay(){
+  G.day++;if(G.day>30){G.day=1;advMonth()}
+  G.wells.forEach(w=>{
+    if(['Permitting','Drilling','Completing','Flowback'].includes(w.status)){w.dInPhase++;if(w.dInPhase>=w.dReq)advPhase(w)}
+    if(w.status==='Workover'){w.woDaysLeft--;if(w.woDaysLeft<=0){w.status='Producing';w.woCount++;w.ipOil*=rand(1.15,1.45)/(1+w.woCount*0.08);w.needsWorkover=false;showToast({month:G.month,label:MONTHS[G.month%12]+' '+G.year,well:w.name,event:'Workover Done! 🔧',desc:'Restored.',cost:0,cat:'good'});updateMarker(w)}}
+    if(w.status==='Producing'&&!w.needsWorkover&&w.monthsOn>1){if(Math.random()<1/rand(90,360)){w.needsWorkover=true;w.ipOil*=0.7;showToast({month:G.month,label:MONTHS[G.month%12]+' '+G.year,well:w.name,event:'⚠️ Well Failure',desc:'Workover needed.',cost:0,cat:'ops'});updateMarker(w)}}
+  });
+}
+
+function advMonth(){
+  G.month++;if(G.month%12===0&&G.month>0)G.year++;
+  G.wti=+simPrice(G.wti,0.25,0.15,72).toFixed(2);
+  G.gas=+simPrice(G.gas,0.35,0.20,3.50).toFixed(2);
+  G.wells.forEach(w=>{if(w.status==='Producing')w.monthsOn++});
+  G.aEvts=G.aEvts.filter(e=>{e.dur--;return e.dur>0});
+  G.wells.forEach(w=>{
+    if(!['Producing','Drilling','Completing'].includes(w.status))return;
+    for(let ev of EVENTS){if(Math.random()<ev.prob){let cost=rand(ev.cost[0],ev.cost[1]);G.aEvts.push({name:ev.name,wid:w.id,pi:ev.pImpact,dur:ev.dur||1});G.cash-=cost;G.evtLog.push({month:G.month,label:MONTHS[G.month%12]+' '+G.year,well:w.name,event:ev.name,desc:ev.desc,cost,cat:ev.cat});showToast({month:G.month,label:MONTHS[G.month%12]+' '+G.year,well:w.name,event:ev.name,desc:ev.desc,cost,cat:ev.cat});break}}
+  });
+  let tOil=G.wells.reduce((s,w)=>s+(w.status==='Producing'?w.oilRate*30.4:0),0);
+  G.hist.push({m:G.month,cash:G.cash,rev:G.hourlyRev*720,opex:G.hourlyOpex*720,oil:tOil,wti:G.wti});
+  if(G.cash<-10_000_000){G.over=true;showGO()}
+  updateAll();
+}
+
+function simPrice(c,v,m,l){let dt=1/12,d=m*(Math.log(l)-Math.log(c))*dt,s=v*Math.sqrt(dt)*((Math.random()+Math.random()+Math.random()-1.5)*1.1);return Math.max(c*Math.exp(d+s),c*0.5)}
+
+function advPhase(w){
+  let fm=FORMATIONS[w.formation],ls=LATERAL_SCALE[w.lateral];
+  if(w.status==='Permitting'){w.status='Drilling';w.dInPhase=0;w.dReq=randI(15,30);G.cash-=w.drillCost;G.tCapex+=w.drillCost}
+  else if(w.status==='Drilling'){w.status='Completing';w.dInPhase=0;w.dReq=randI(14,28);G.cash-=w.completionCost;G.tCapex+=w.completionCost;
+    // Spawn frac fleet from Watford City
+    spawnVehicle('frac_fleet',WATFORD_CITY.lat,WATFORD_CITY.lng,w.lat,w.lng,w);
+  }
+  else if(w.status==='Completing'){w.status='Flowback';w.dInPhase=0;w.dReq=randI(10,25);G.cash-=w.facilityCost;G.tCapex+=w.facilityCost;
+    w.ipOil=rand(600,1800)*fm.ipOilMult*ls.ipMult*rand(0.85,1.15);w.ipGas=rand(800,2500)*fm.ipGasMult*ls.ipMult*rand(0.85,1.15);
+    w.di=rand(0.8,2.0);w.gor=rand(...fm.gorBase);w.gorRate=fm.gorRate;w.wc=rand(0.20,0.50);w.wcRate=0.10;w.loe=rand(8,15)}
+  else if(w.status==='Flowback'){w.status='Producing';w.dInPhase=0}
+  updateMarker(w);updateAll();
+}
+
+// ═══ PAD & WELL ═══
+let pendingLatLng=null,selWellCount=2,selFormation='MB',selLateral=10000;
+
+function createPad(name,nw,fm,lat,lng){
+  G.pCtr++;let f=FORMATIONS[fm],ls=LATERAL_SCALE[selLateral];
+  let bD=rand(4e6,7e6),bC=rand(3.5e6,6.5e6),fB=rand(800000,2000000),fT=fB*(1+(nw-1)*0.3);
+  let pad={id:'PAD-'+G.pCtr,name,formation:fm,lateral:selLateral,numWells:nw,lat,lng,wells:[]};
+  // Add facility marker (larger)
+  let facIcon=L.divIcon({className:'vehicle-marker',html:'<div style="font-size:22px;text-shadow:0 1px 4px rgba(0,0,0,0.7)">🏭</div>',iconSize:[28,28],iconAnchor:[14,14]});
+  L.marker([lat+0.004,lng+0.004],{icon:facIcon}).addTo(map).bindTooltip(name+' Facility',{direction:'top'});
+  // Draw pad boundary
+  let bounds=[[lat-0.006,lng-0.012],[lat+0.012,lng+0.012]];
+  L.rectangle(bounds,{color:'#d4a017',weight:1,opacity:0.4,fillOpacity:0.05,dashArray:'4,4'}).addTo(map);
+  for(let i=0;i<nw;i++){
+    G.wCtr++;let acres=randI(640,1280),lC=acres*rand(3000,12000);
+    let dC=bD*f.costMult*ls.costMult*rand(0.9,1.1),cC=bC*f.costMult*ls.costMult*rand(0.9,1.1);
+    let wLat=lat+(i%3)*0.005-0.005,wLng=lng+Math.floor(i/3)*0.005;
+    let w={id:'W-'+String(G.wCtr).padStart(3,'0'),name:name+' #'+(i+1),padId:pad.id,status:'Lease Acquired',acres,leaseCost:lC,drillCost:dC,completionCost:cC,facilityCost:fT/nw,formation:fm,lateral:selLateral,
+      ipOil:0,ipGas:0,di:1.2,gor:1000,gorRate:f.gorRate,wc:0.3,wcRate:0.10,loe:rand(8,15),oilRate:0,gasRate:0,waterRate:0,cumOil:0,cumGas:0,cumWater:0,cumRev:0,cumOpex:0,
+      monthsOn:0,dInPhase:0,dReq:0,liftType:'Natural Flow',woCount:0,needsWorkover:false,woDaysLeft:0,lat:wLat,lng:wLng,marker:null};
+    G.cash-=lC;G.tCapex+=lC;pad.wells.push(w.id);G.wells.push(w);addWellMarker(w);
+    // Draw access road from well to pad center
+    L.polyline([[wLat,wLng],[lat,lng]],{color:'#b0a080',weight:1.5,opacity:0.3}).addTo(map);
+  }
+  G.pads.push(pad);return pad;
+}
+
+function startWell(wid){let w=G.wells.find(x=>x.id===wid);if(!w||w.status!=='Lease Acquired')return;if(G.cash<(w.drillCost+w.completionCost+w.facilityCost)*0.2){alert('Need cash!');return}w.status='Permitting';w.dInPhase=0;w.dReq=randI(15,45);updateMarker(w);updateAll()}
+
+function installLift(wid,type){let w=G.wells.find(x=>x.id===wid);if(!w||w.status!=='Producing')return;let lt=LIFT_TYPES[type],cost=rand(...lt.cost);if(G.cash<cost){alert('No funds!');return}w.liftType=type;G.cash-=cost;G.tCapex+=cost;w.ipOil*=lt.efficiency*1.12;updateAll();closeDetail()}
+
+function doWorkover(wid){
+  let w=G.wells.find(x=>x.id===wid);if(!w||w.status!=='Producing')return;
+  let cost=rand(200000,700000);if(G.cash<cost){alert('No funds!');return}
+  G.cash-=cost;G.tCapex+=cost;w.status='Workover';w.woDaysLeft=randI(7,21);
+  // Spawn workover rig from Watford City!
+  spawnVehicle('wo_rig',WATFORD_CITY.lat,WATFORD_CITY.lng,w.lat,w.lng,w);
+  showToast({month:G.month,label:MONTHS[G.month%12]+' '+G.year,well:w.name,event:'WO Rig Dispatched 🔧',desc:'From Watford City. '+w.woDaysLeft+'d est.',cost,cat:'ops'});
+  updateMarker(w);updateAll();closeDetail();
+}
+
+// ═══ MAP ═══
+let map;
+function initMap(){
+  map=L.map('map',{zoomControl:false,attributionControl:false}).setView([47.80,-103.30],10);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,minZoom:7}).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,opacity:0.7}).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,opacity:0.5}).addTo(map);
+  L.control.zoom({position:'topright'}).addTo(map);
+  // Watford City service yard marker
+  let wcIcon=L.divIcon({className:'vehicle-marker',html:'<div style="font-size:20px">🏢</div>',iconSize:[24,24],iconAnchor:[12,12]});
+  L.marker([WATFORD_CITY.lat,WATFORD_CITY.lng],{icon:wcIcon}).addTo(map).bindTooltip('Watford City — Service Yard',{permanent:true,direction:'top',className:'wc-label'});
+  // SWD markers
+  SWD_SITES.forEach(s=>{let ic=L.divIcon({className:'vehicle-marker',html:'<div style="font-size:14px">💧</div>',iconSize:[18,18],iconAnchor:[9,9]});L.marker([s.lat,s.lng],{icon:ic}).addTo(map).bindTooltip(s.name,{direction:'top'})});
+  map.on('dblclick',e=>{let snapped=snapToRoad(e.latlng.lat,e.latlng.lng);pendingLatLng=L.latLng(snapped.lat,snapped.lng);openAcquire()});
+  map.doubleClickZoom.disable();
+}
+
+// SVG-based well markers with better graphics
+function makeSVGIcon(w){
+  let s=w.status,size=36,svg='';
+  if(s==='Producing'&&!w.needsWorkover){
+    // Detailed pumpjack SVG
+    svg=`<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="32" width="24" height="3" fill="#555" rx="1"/>
+      <line x1="20" y1="33" x2="20" y2="14" stroke="#888" stroke-width="2.5"/>
+      <g transform="translate(20,14)">
+        <animateTransform attributeName="transform" type="rotate" values="-12,0,0;12,0,0;-12,0,0" dur="2s" repeatCount="indefinite" additive="sum"/>
+        <line x1="-14" y1="0" x2="14" y2="0" stroke="#aaa" stroke-width="2"/>
+        <circle cx="-14" cy="0" r="3" fill="#999" stroke="#777"/>
+        <rect x="9" y="-3" width="6" height="6" fill="#666"/>
+        <line x1="-14" y1="3" x2="-14" y2="18" stroke="#ccc" stroke-width="1" opacity="0.6">
+          <animate attributeName="y2" values="16;20;16" dur="2s" repeatCount="indefinite"/>
+        </line>
+      </g>
+      <rect x="18" y="31" width="4" height="3" fill="#d4a017"/>
+      <circle cx="20" cy="10" r="2" fill="#27ae60"><animate attributeName="opacity" values="1;0.4;1" dur="1.5s" repeatCount="indefinite"/></circle>
+      ${w.liftType==='ESP'?'<rect x="28" y="22" width="6" height="8" fill="#2d9cdb" opacity="0.8" rx="1"/><text x="31" y="28" font-size="5" fill="white" text-anchor="middle">⚡</text>':''}
+      ${w.liftType==='Gas Lift'?'<rect x="28" y="24" width="7" height="6" fill="#444" stroke="#888" stroke-width="0.5" rx="1"/><line x1="31" y1="30" x2="31" y2="36" stroke="#888" stroke-width="0.8" stroke-dasharray="2,1"/>':''}
+    </svg>`;
+  }else if(s==='Drilling'){
+    svg=`<svg width="${size}" height="${size+10}" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="38" width="20" height="4" fill="#666"/>
+      <line x1="12" y1="40" x2="16" y2="4" stroke="#999" stroke-width="1.5"/>
+      <line x1="28" y1="40" x2="24" y2="4" stroke="#999" stroke-width="1.5"/>
+      ${[0,1,2,3,4].map(i=>{let t=i/5,y=40-36*t;return`<line x1="${12+4*t}" y1="${y}" x2="${28-4*t}" y2="${y}" stroke="#888" stroke-width="0.8"/>`}).join('')}
+      <rect x="15" y="2" width="10" height="3" fill="#888"/>
+      <line x1="20" y1="5" x2="20" y2="40" stroke="#bbb" stroke-width="1.2">
+        <animate attributeName="y2" values="38;42;38" dur="0.8s" repeatCount="indefinite"/>
+      </line>
+      <rect x="17" y="18" width="6" height="4" fill="#aaa"><animate attributeName="y" values="16;22;16" dur="0.8s" repeatCount="indefinite"/></rect>
+      <circle cx="20" cy="2" r="2.5" fill="#ffdc64"><animate attributeName="opacity" values="1;0.4;1" dur="1s" repeatCount="indefinite"/></circle>
+      <rect x="30" y="30" width="8" height="7" fill="#444" stroke="#666" stroke-width="0.5"/>
+    </svg>`;
+  }else if(s==='Completing'){
+    svg=`<svg width="${size}" height="30" viewBox="0 0 44 30" xmlns="http://www.w3.org/2000/svg">
+      ${[0,1,2].map(i=>`<rect x="${2+i*14}" y="8" width="12" height="8" fill="#c0392b" rx="1"><animate attributeName="y" values="8;${7+Math.random()};8" dur="0.3s" repeatCount="indefinite"/></rect>`).join('')}
+      <line x1="2" y1="18" x2="42" y2="18" stroke="#c0392b" stroke-width="2"/>
+      <rect x="18" y="20" width="6" height="4" fill="#d4a017"/>
+      <text x="22" y="6" font-size="6" fill="#e74c3c" text-anchor="middle" font-family="monospace">FRAC</text>
+    </svg>`;
+  }else if(s==='Workover'){
+    svg=`<svg width="${size}" height="${size+8}" viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="36" width="16" height="4" fill="#8B4513"/>
+      <line x1="8" y1="38" x2="12" y2="10" stroke="#e67e22" stroke-width="1.5"/>
+      <line x1="20" y1="38" x2="16" y2="10" stroke="#e67e22" stroke-width="1.5"/>
+      <rect x="11" y="8" width="6" height="2" fill="#e67e22"/>
+      <line x1="14" y1="10" x2="14" y2="38" stroke="#e67e22" stroke-width="1" opacity="0.6">
+        <animate attributeName="y2" values="36;40;36" dur="1s" repeatCount="indefinite"/>
+      </line>
+      <rect x="12" y="20" width="4" height="5" fill="#e67e22"><animate attributeName="y" values="18;24;18" dur="1s" repeatCount="indefinite"/></rect>
+      <circle cx="14" cy="7" r="2" fill="#e67e22"><animate attributeName="opacity" values="1;0.2;1" dur="0.5s" repeatCount="indefinite"/></circle>
+      <rect x="22" y="34" width="10" height="6" fill="#555" rx="1"/><rect x="23" y="35" width="8" height="4" fill="#e67e22" rx="1"/>
+    </svg>`;
+  }else if(s==='Flowback'){
+    svg=`<svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="12" width="14" height="8" fill="#555" stroke="#9b59b6" stroke-width="1"/>
+      <line x1="22" y1="12" x2="22" y2="2" stroke="#999" stroke-width="1.5"/>
+      <circle cx="22" cy="1" r="2.5" fill="orange"><animate attributeName="r" values="2;3.5;2" dur="0.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0.5;0.9" dur="0.8s" repeatCount="indefinite"/></circle>
+    </svg>`;
+  }else if(w.needsWorkover){
+    svg=`<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="rgba(230,126,34,0.3)" stroke="#e67e22" stroke-width="2"><animate attributeName="r" values="8;11;8" dur="1s" repeatCount="indefinite"/></circle><text x="12" y="16" font-size="12" text-anchor="middle">⚠️</text></svg>`;
+  }else{
+    let col=s==='Permitting'?'#7f8c8d':'#d4a017';
+    svg=`<svg width="20" height="20" viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" fill="none" stroke="${col}" stroke-width="1.5" stroke-dasharray="3,2" rx="2"/><text x="10" y="13" font-size="6" fill="${col}" text-anchor="middle" font-family="monospace">${s==='Permitting'?'PRM':'LSE'}</text></svg>`;
+  }
+  return L.divIcon({className:'vehicle-marker',html:svg,iconSize:[size,size+10],iconAnchor:[size/2,size/2+5]});
+}
+
+function addWellMarker(w){
+  let icon=makeSVGIcon(w);
+  w.marker=L.marker([w.lat,w.lng],{icon}).addTo(map);
+  w.marker.on('click',()=>openDetail(w.id));
+  w.marker.bindTooltip(w.name,{direction:'top',offset:[0,-20]});
+}
+
+function updateMarker(w){if(!w.marker)return;w.marker.setIcon(makeSVGIcon(w))}
+
+// ═══ UI ═══
+function startGame(){document.getElementById('mainMenu').classList.remove('active');document.getElementById('gameScreen').classList.add('active');initMap();renderWCBtns();updateCostEst();updateAll();startTicking()}
+function showHow(){document.getElementById('mainMenu').classList.remove('active');document.getElementById('howScreen').classList.add('active')}
+function hideHow(){document.getElementById('howScreen').classList.remove('active');document.getElementById('mainMenu').classList.add('active')}
+function openAcquire(){document.getElementById('acqPanel').classList.add('open')}
+function closeAcquire(){document.getElementById('acqPanel').classList.remove('open')}
+function togglePause(){G.paused=!G.paused;let b=document.getElementById('btnPause');b.textContent=G.paused?'▶':'⏸';b.className='t-btn '+(G.paused?'act':'pause')}
+function setSpeed(s){G.speed=s;G.paused=false;document.getElementById('btnPause').textContent='⏸';document.getElementById('btnPause').className='t-btn pause';document.querySelectorAll('.time-row .t-btn').forEach(b=>{if(b.textContent.trim()===s+'x')b.classList.add('on');else if(!b.classList.contains('act')&&b.id!=='btnPause')b.classList.remove('on')})}
+function updateClockDisplay(){let h=String(Math.floor(G.hour)).padStart(2,'0');document.getElementById('hudClock').textContent=MONTHS[G.month%12]+' '+G.day+', '+G.year+' · '+h+':00'}
+function updateCashDisplay(){document.getElementById('hCash').textContent=fmt$(G.cash,1);let r=G.hourlyRev*24,o=G.hourlyOpex*24,n=r-o;document.getElementById('hudHR').textContent='+'+fmt$(r,1)+'/d';document.getElementById('hudHO').textContent='-'+fmt$(o,1)+'/d';let ne=document.getElementById('hudNet');ne.textContent='NET '+fmt$(n,1)+'/d';ne.style.color=n>=0?'var(--green)':'var(--red)'}
+
+function openDetail(wid){
+  let w=G.wells.find(x=>x.id===wid);if(!w)return;
+  let t=w.monthsOn/12,df=Math.max(Math.exp(-w.di*t),0.03);
+  let net=w.cumRev-w.cumOpex-(w.leaseCost+w.drillCost+w.completionCost+w.facilityCost);
+  let lH='';
+  if(w.status==='Producing'&&w.liftType==='Natural Flow')lH=`<div class="r-section">LIFT</div><div class="lift-options"><button class="lift-btn" onclick="installLift('${w.id}','Rod Pump')">⚙️ Rod<span class="cost">$80-180K</span></button><button class="lift-btn" onclick="installLift('${w.id}','ESP')">⚡ ESP<span class="cost">$150-350K</span></button><button class="lift-btn" onclick="installLift('${w.id}','Gas Lift')">💨 Gas<span class="cost">$200-400K</span></button></div>`;
+  else if(w.liftType!=='Natural Flow')lH=`<div class="r-section">LIFT</div><div style="color:var(--gold);font-size:.8rem">${LIFT_TYPES[w.liftType]?.icon} ${w.liftType}</div>`;
+  document.getElementById('detContent').innerHTML=`
+    <div class="r-panel-t">${w.name}</div><div style="color:var(--steel);font-size:.65rem">${w.id} · ${FORMATIONS[w.formation].name} · ${fmtN(w.lateral)}ft</div>
+    <div class="wc-s s-${scls(w.status)}" style="display:inline-block;margin:5px 0">${w.status.toUpperCase()}</div>
+    <div class="r-section">PRODUCTION</div>
+    <div class="r-row">Oil <span style="color:var(--gold)">${fmtN(w.oilRate)} bbl/d</span></div><div class="r-row">Gas <span style="color:var(--blue)">${fmtN(w.gasRate)} mcf/d</span></div><div class="r-row">Water <span>${fmtN(w.waterRate)} bbl/d</span></div>
+    <div class="r-row">Decline <span>${(df*100).toFixed(1)}%</span></div><div class="r-row">Months <span>${w.monthsOn}</span></div><div class="r-row">Cum Oil <span>${fmtN(w.cumOil)} bbl</span></div>
+    <div class="r-section">ECONOMICS</div>
+    <div class="r-row">Lease <span>${fmt$(w.leaseCost,1)}</span></div><div class="r-row">Drill <span>${fmt$(w.drillCost,1)}</span></div><div class="r-row">Comp <span>${fmt$(w.completionCost,1)}</span></div><div class="r-row">Fac <span>${fmt$(w.facilityCost,1)}</span></div>
+    <div class="r-row">Rev <span style="color:var(--green)">${fmt$(w.cumRev,1)}</span></div><div class="r-row">Opex <span style="color:var(--red)">${fmt$(w.cumOpex,1)}</span></div>
+    <div class="r-row" style="border-top:1px solid rgba(212,160,23,0.2);padding-top:3px"><strong>Net</strong> <span style="color:${net>0?'var(--green)':'var(--red)'}"><strong>${fmt$(net,1)}</strong></span></div>
+    ${lH}
+    ${w.status==='Workover'?`<div class="r-section" style="color:#e67e22">🔧 WORKOVER</div><div style="font-size:.75rem;color:#e67e22">${w.woDaysLeft}d left</div><div class="prog"><div class="prog-f" style="width:${(1-w.woDaysLeft/21)*100}%;background:#e67e22"></div></div>`:''}
+    ${w.status==='Producing'&&w.needsWorkover?`<div style="background:rgba(230,126,34,0.1);border:1px solid rgba(230,126,34,0.3);padding:5px;margin-top:6px;font-size:.7rem;color:#e67e22">⚠️ FAILURE — Workover needed</div><button class="r-btn" onclick="doWorkover('${w.id}')" style="border-color:#e67e22;color:#e67e22">🔧 DISPATCH FROM WATFORD CITY</button>`:''}
+    ${w.status==='Producing'&&!w.needsWorkover?`<button class="r-btn" onclick="doWorkover('${w.id}')" style="margin-top:8px">🔧 PREVENTIVE WORKOVER</button>`:''}
+    ${w.status==='Lease Acquired'?`<button class="r-btn" onclick="startWell('${w.id}');closeDetail()">⛏️ START PERMITTING</button>`:''}`;
+  document.getElementById('detPanel').classList.add('open');
+  map.panTo([w.lat,w.lng]);
+}
+function closeDetail(){document.getElementById('detPanel').classList.remove('open')}
+function scls(s){return s==='Producing'?'prod':s==='Drilling'?'drill':s==='Completing'?'comp':s==='Permitting'?'perm':s==='Flowback'?'flow':s==='Workover'?'wo':'lease'}
+function swTab(el,t){document.querySelectorAll('.tc').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));document.getElementById('tc-'+t).classList.add('on');el.classList.add('on')}
+function renderWCBtns(){document.getElementById('wcBtns').innerHTML=[1,2,3,4,6].map(n=>`<button class="lift-btn ${n===selWellCount?'sel':''}" onclick="selWC(${n})" style="flex:1;min-width:30px">${n}</button>`).join('')}
+function selWC(n){selWellCount=n;renderWCBtns();updateCostEst()}
+function pickFormation(el,f){selFormation=f;document.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateCostEst()}
+function pickLateral(el,l){selLateral=l;document.querySelectorAll('[data-l]').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateCostEst()}
+function updateCostEst(){let fm=FORMATIONS[selFormation],ls=LATERAL_SCALE[selLateral],aL=7500*960,aD=5500000*fm.costMult*ls.costMult,aC=5000000*fm.costMult*ls.costMult,fB=1400000*(1+(selWellCount-1)*0.3),pW=aL+aD+aC+fB/selWellCount,tot=pW*selWellCount;
+  document.getElementById('costEst').innerHTML=`<div class="r-row">Wells <span>${selWellCount}</span></div><div class="r-row">Per well <span>${fmt$(pW,1)}</span></div><div class="r-row" style="color:var(--gold)"><strong>Total</strong> <span><strong>${fmt$(tot,1)}</strong></span></div><div class="r-row">Cash <span style="color:${G.cash>=tot?'var(--green)':'var(--red)'}">${fmt$(G.cash,1)}</span></div>`}
+function buildPad(){let name=document.getElementById('padNameIn').value||'Pad '+String.fromCharCode(65+G.pCtr);let lat=pendingLatLng?pendingLatLng.lat:47.8+rand(-0.3,0.3),lng=pendingLatLng?pendingLatLng.lng:-103.3+rand(-0.3,0.3);createPad(name,selWellCount,selFormation,lat,lng);pendingLatLng=null;document.getElementById('padNameIn').value='';closeAcquire();updateAll()}
+
+function updateAll(){
+  document.getElementById('hWTI').textContent='$'+G.wti.toFixed(2);document.getElementById('hGas').textContent='$'+G.gas.toFixed(2);
+  let tO=G.wells.reduce((s,w)=>s+(w.status==='Producing'?w.oilRate:0),0),tG=G.wells.reduce((s,w)=>s+(w.status==='Producing'?w.gasRate:0),0);
+  document.getElementById('hOil').textContent=fmtN(tO);document.getElementById('hGR').textContent=fmtN(tG);document.getElementById('hWells').textContent=G.wells.length;
+  let pv=G.cash;G.wells.forEach(w=>{if(w.status==='Producing')pv+=(w.oilRate*30.4*G.wti+w.gasRate*30.4*G.gas)*18});
+  document.getElementById('hPV').textContent=fmt$(pv,1);
+  updateWC();updateOps();updateProd();updateEvt();updateCostEst();G.wells.forEach(w=>updateMarker(w));
+}
+
+function updateWC(){let el=document.getElementById('wellList');if(!G.wells.length){el.innerHTML='<div style="color:var(--steel);font-size:.75rem;padding:14px;width:100%;text-align:center">Double-click map to place pads.</div>';return}
+  el.innerHTML=G.wells.map(w=>{let sc=scls(w.status),prog='';
+    if(['Permitting','Drilling','Completing','Flowback'].includes(w.status))prog=`<div class="prog"><div class="prog-f" style="width:${Math.min(w.dInPhase/Math.max(w.dReq,1)*100,100)}%"></div></div>`;
+    if(w.status==='Workover')prog=`<div class="prog"><div class="prog-f" style="width:${(1-w.woDaysLeft/21)*100}%;background:#e67e22"></div></div>`;
+    let st='';
+    if(w.status==='Producing')st=`<div class="wc-gl">Oil</div><div class="wc-gv" style="color:var(--gold)">${fmtN(w.oilRate)} b/d</div><div class="wc-gl">Net</div><div class="wc-gv" style="color:${w.cumRev-w.cumOpex>0?'var(--green)':'var(--red)'}">${fmt$(w.cumRev-w.cumOpex,1)}</div>`;
+    else if(w.status==='Workover')st=`<div class="wc-gl">WO</div><div class="wc-gv" style="color:#e67e22">${w.woDaysLeft}d</div>`;
+    else if(w.status==='Lease Acquired')st=`<div class="wc-gl">D&C</div><div class="wc-gv">${fmt$(w.drillCost+w.completionCost,1)}</div>`;
+    else st=`<div class="wc-gl">Day</div><div class="wc-gv">${w.dInPhase}/${w.dReq}</div>`;
+    return`<div class="wc ${sc}" onclick="openDetail('${w.id}');map.panTo([${w.lat},${w.lng}])"><div class="wc-h"><div class="wc-n">${w.name}</div><div class="wc-s s-${sc}">${w.status.toUpperCase()}</div></div><div class="wc-g">${st}</div>${prog}
+    ${w.needsWorkover&&w.status==='Producing'?`<button class="wc-btn" style="border-color:#e67e22;color:#e67e22;background:rgba(230,126,34,0.1)" onclick="event.stopPropagation();doWorkover('${w.id}')">⚠️ DISPATCH WO</button>`:''}
+    ${w.status==='Lease Acquired'?`<button class="wc-btn" onclick="event.stopPropagation();startWell('${w.id}')">⛏️ START</button>`:''}</div>`}).join('')}
+
+function updateOps(){let el=document.getElementById('opsArea');let pw=G.wells.filter(w=>w.status==='Producing'||w.status==='Workover');if(!pw.length){el.innerHTML='<div style="color:var(--steel);font-size:.75rem">No wells.</div>';return}
+  el.innerHTML=pw.map(w=>{if(w.status==='Workover')return`<div style="padding:2px 0;font-size:.68rem;color:#e67e22">🔧 ${w.name} — ${w.woDaysLeft}d left</div>`;
+    let t=w.monthsOn/12,df=Math.exp(-w.di*t);return`<div style="display:flex;align-items:center;gap:6px;padding:2px 0;border-bottom:1px solid rgba(127,140,141,0.06);font-size:.68rem"><span style="min-width:90px;cursor:pointer" onclick="openDetail('${w.id}')">${w.name}</span><span style="color:var(--steel)">${fmtN(w.oilRate)}b/d ${(df*100).toFixed(0)}%</span>${w.needsWorkover?`<button class="wc-btn" style="width:auto;margin:0;padding:1px 5px;border-color:#e67e22;color:#e67e22;font-size:.55rem" onclick="doWorkover('${w.id}')">⚠️ WO</button>`:''}</div>`}).join('')}
+
+function updateProd(){let el=document.getElementById('prodArea');if(!G.hist.length){el.innerHTML='<div style="color:var(--steel);font-size:.75rem">Start clock.</div>';return}
+  let h=G.hist[G.hist.length-1];el.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;font-family:'Share Tech Mono',monospace;font-size:.65rem"><div>OIL: <span style="color:var(--gold)">${fmtN(h.oil)} bbl/mo</span></div><div>REV: <span style="color:var(--green)">${fmt$(h.rev,1)}/mo</span></div><div>OPEX: <span style="color:var(--red)">${fmt$(h.opex,1)}/mo</span></div><div>CAPEX: ${fmt$(G.tCapex,1)}</div><div>Vehicles: ${G.vehicles.length}</div></div>`}
+
+function updateEvt(){let el=document.getElementById('evtArea');if(!G.evtLog.length){el.innerHTML='<div style="color:var(--steel);font-size:.75rem">No events.</div>';return}
+  el.innerHTML=G.evtLog.slice(-12).reverse().map(e=>{let g=e.cat==='good';return`<div style="padding:2px 0;border-bottom:1px solid rgba(127,140,141,0.06);font-size:.68rem"><span style="color:${g?'var(--green)':'var(--red)'}">⚡${e.event}</span> <span style="color:var(--steel)">${e.well}</span> <span style="font-family:'Share Tech Mono',monospace;color:${g?'var(--green)':'var(--red)'}"> ${e.cost<=0?'+':'-'}${fmt$(Math.abs(e.cost),1)}</span></div>`}).join('')}
+
+function showToast(e){let o=document.querySelector('.toast');if(o)o.remove();let g=e.cat==='good',t=document.createElement('div');t.className='toast '+(g?'good':'bad');t.innerHTML=`<div class="toast-t" style="color:${g?'var(--green)':'var(--red)'}">⚡${e.event}</div><div class="toast-d">${e.desc}—${e.well}</div>${e.cost?`<div style="font-family:'Share Tech Mono',monospace;font-size:.8rem;color:${g?'var(--green)':'var(--red)'};margin-top:2px">${e.cost<=0?'+':'-'}${fmt$(Math.abs(e.cost))}</div>`:''}`;document.body.appendChild(t);setTimeout(()=>t.remove(),4500)}
+
+function showGO(){document.getElementById('gameScreen').classList.remove('active');document.getElementById('gameOver').classList.add('active');document.getElementById('goStats').innerHTML=`<div class="go-stat">Survived <span>${G.month} months</span></div><div class="go-stat">Wells: <span>${G.wells.length}</span></div><div class="go-stat">Oil: <span>${fmtN(G.wells.reduce((s,w)=>s+w.cumOil,0))} bbl</span></div><div class="go-stat">Revenue: <span>${fmt$(G.tRev)}</span></div>`}
+
+// Menu BG
+!function(){let c=document.getElementById('menuBg'),cx=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;let p=[];for(let i=0;i<50;i++)p.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.5,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,a:Math.random()*.2+.1});
+!function d(){cx.clearRect(0,0,c.width,c.height);p.forEach((a,i)=>{p.forEach((b,j)=>{if(j<=i)return;let dd=Math.hypot(a.x-b.x,a.y-b.y);if(dd<180){cx.beginPath();cx.strokeStyle=`rgba(212,160,23,${.04*(1-dd/180)})`;cx.lineWidth=.5;cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke()}});cx.beginPath();cx.arc(a.x,a.y,a.r,0,Math.PI*2);cx.fillStyle=`rgba(212,160,23,${a.a})`;cx.fill();a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>c.width)a.vx*=-1;if(a.y<0||a.y>c.height)a.vy*=-1});if(document.getElementById('mainMenu').classList.contains('active'))requestAnimationFrame(d)}()}();
+</script>
+</body>
+</html>
